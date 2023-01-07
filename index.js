@@ -7,8 +7,9 @@ console.log(crossVectors(vec1, vec2));
 console.log(dotVectors(vec1, vec2));
 
 
-//== variable declaration =//
+//== variable declaration ==//
 // define the width and height of our canvas, and determine its aspect ratio
+// 1920x1080 is not a sane value; most likely the canvas should be scaled/stretched to fit the screen after it has finished rendering
 let width = 640;
 let height = 480;
 let ratio = width / height;
@@ -29,8 +30,6 @@ main.appendChild(canvas);
 //== prepare for rendering ==//
 // get the context of our canvas in order to render to it
 const context = canvas.getContext("2d");
-// disable image smoothing in this context
-context.imageSmoothingEnabled = false;
 
 // create the ImageData object to which we will render our pixels offscreen
 const buffer = context.createImageData(width, height);
