@@ -26,7 +26,7 @@ function intersectWorldNormals(ray, world, t_min, t_max) {
 // intersect with the world and return a single diffuse colour for all objects
 function intersectWorldColour(ray, world, t_min, t_max, colour = new Vector3(255, 255, 255), depth) {
   if (depth < 1) {
-    return colour;
+    return new Vector3(0, 0, 0);
   }
 
   let closestSoFar = t_max;
@@ -49,15 +49,16 @@ function intersectWorldColour(ray, world, t_min, t_max, colour = new Vector3(255
       unitSphereVector = normalizeVector(unitSphereVector);
       target = addVectors(target, unitSphereVector);
       const recursiveRay = new Ray(finalObj.point, subtractVectors(target, finalObj.point));
-      return multiplyVector(intersectWorldColour(recursiveRay, world, 0, Infinity, colour, depth - 1), 0.7);
+      return mixColours(colour, multiplyVector(intersectWorldColour(recursiveRay, world, 0, Infinity, colour, depth - 1), 0.5));
     } else {
       const dir = normalizeVector(ray.direction);
-      const t = dir.y + 1.75;
-      return multiplyVector(addVectors(multiplyVector(new Vector3(0.85, 0.75, 1), t), multiplyVector(new Vector3(1, 1, 1), (1 - t))), 255);
+      const t = dir.y + 0.7;
+      return addVectors(multiplyVector(new Vector3(50, 50, 255), t), multiplyVector(new Vector3(255, 50, 50), (1 - t)));
     }
   }
 
-  // return the ray direction if nothing is in the world
+  // return the sky if nothing is in the world
   const dir = normalizeVector(ray.direction);
-  return multiplyVector(dir, 255);
+  const t = dir.y + 1;
+  return addVectors(multiplyVector(new Vector3(0, 0, 0), t), multiplyVector(new Vector3(255, 255, 255), (1 - t)));
 }

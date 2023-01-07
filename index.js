@@ -1,20 +1,22 @@
 //== variable declaration ==//
 // define the width and height of our canvas, and determine its aspect ratio
 // 1920x1080 is not a sane value; most likely the canvas should be scaled/stretched to fit the screen after it has finished rendering
-let width = 320;
-let height = 240;
+let width = 640;
+let height = 480;
 let ratio = width / height;
-// current tick (for animation)
+// tick tracking (for animation, updating on-page values)
+let oldSamples = 0;
 let tick = 0;
-// current sample (for accumulation multisampling)
+// current sample (for accumulation multisampling) and set a max sample rate
 let sample = 0;
+let maxSamples = 1000;
 // set the depth of our samples (# of bounces)
-const depth = 4;
+const depth = 2;
 
 // define our camera
 const camera = new Camera(new Vector3(0, 0, 0), new Vector3(0, 0, 1), 60, ratio);
 // define our world `
-const sphere1 = new Sphere(new Vector3(0, 0, -60), 20);
+const sphere1 = new Sphere(new Vector3(0, 0, -60), 25);
 const sphere2 = new Sphere(new Vector3(-20, 13, -40), 8);
 const sphere3 = new Sphere(new Vector3(20, -13, -40), 8);
 const sphere4 = new Sphere(new Vector3(20, 13, -40), 8);
@@ -24,14 +26,18 @@ const world = [sphere1, sphere2, sphere3, sphere4, sphere5];
 
 //== define and manage page elements ==//
 // get our main div and create a canvas element
-const main = document.getElementById("canvas");
+const div = document.getElementById("canvas");
 const canvas = document.createElement("canvas");
 // define our canvas properties
 canvas.textContent = "The raytracer is being rendered on this canvas.";
 canvas.setAttribute("width", width);
 canvas.setAttribute("height", height);
 // add our canvas to the page
-main.appendChild(canvas);
+div.appendChild(canvas);
+// grab our sub-headers and update them
+const samplesPerSecondEl = document.getElementById("samples-per-second");
+const samplesEl = document.getElementById("samples");
+const depthEl = document.getElementById("depth");
 
 
 //== prepare for rendering ==//
@@ -40,12 +46,20 @@ const context = canvas.getContext("2d");
 
 // create the ImageData object to which we will render our pixels offscreen
 const renderBuffer = context.createImageData(width, height);
-// wrap a function to move the world
-function animateWorld() {
-  moveObject(sphere1);
+// const displayBuffer = context.createImageData(width, height);
+// wrap a function to call every 1/10 of a second
+function main() {
+  // update our on-page elements
+  samplesEl.textContent = "Samples so far: " + sample;
+  depthEl.textContent = "Current ray depth: " + depth;
+  if (sample < maxSamples) {
+    raytrace();
+  }
 }
-// setInterval(animateWorld, 1);
-setInterval(raytrace, 100);
+// run it as fast as possible
+setInterval(main, 1);
+// now check how many samples are being rendered per second
+setInterval(samplesPerSecondCalc, 250);
 
 
 //== function declaration ==//
@@ -54,6 +68,7 @@ function raytrace() {
   sample += 1;
   // get our buffer data
   const renderData = renderBuffer.data;
+  // const displayData = displayBuffer.data;
 
   // iterate through each pixel and cast a ray from it with our camera class
   for (let y = 0; y < height; y++) {
@@ -68,17 +83,25 @@ function raytrace() {
 
       // intersect this ray with the world
       // colour = intersectWorldNormals(ray, world, 0, Infinity);
-      colour = intersectWorldColour(ray, world, 0, Infinity, new Vector3(255, 255, 255), depth);
+      colour = intersectWorldColour(ray, world, 0, Infinity, new Vector3(1, 1, 1), depth);
 
       // paint this colour to the buffer at the appropriate index
       const index = getIndex(x, y, width);
+      // make room for new additive colour value
       renderData[index] *= 1 - (1 / sample);
       renderData[index + 1] *= 1 - (1 / sample);
       renderData[index + 2] *= 1 - (1 / sample);
+      // add the new sample
       renderData[index] += colour.x * (1 / sample); // red channel
       renderData[index + 1] += colour.y * (1 / sample); // green channel
       renderData[index + 2] += colour.z * (1 / sample); // blue channel
       renderData[index + 3] = 255; // full alpha
+
+      // apply gamma curve to rendered data by writing it to the display buffer
+      // displayData[index] = Math.pow(renderData[index], 0.9);
+      // displayData[index + 1] = Math.pow(renderData[index + 1], 0.9);
+      // displayData[index + 2] = Math.pow(renderData[index + 2], 0.9);
+      // displayData[index + 3] = renderData[index + 3];
     }
   }
 
@@ -126,6 +149,13 @@ function fillBufferRandom() {
 function getIndex(x, y, width) {
   const redIndex = y * (width * 4) + x * 4;
   return redIndex;
+}
+
+// calculates the # of samples being performed per second (roughly)
+function samplesPerSecondCalc() {
+  let numSinceCheck = (sample - oldSamples) * 4; // will be updated 4 times per second
+  samplesPerSecondEl.textContent = "Samples per second: " + numSinceCheck;
+  oldSamples = sample;
 }
 
 // moves the world

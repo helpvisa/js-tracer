@@ -128,3 +128,14 @@ function randomUnitSphereVector() {
         return p;
     }
 }
+
+//== colour mixing functions ==//
+function mixColours(col1, col2) {
+  let returnVector = new Vector3(0, 0, 0);
+
+  returnVector.x = col1.x * col2.x;
+  returnVector.y = col1.y * col2.y;
+  returnVector.z = col1.z * col2.z;
+
+  return returnVector;
+}
