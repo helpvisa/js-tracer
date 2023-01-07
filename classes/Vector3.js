@@ -8,9 +8,11 @@ class Vector3 {
 
   // methods
   normalize() {
-    const max = Math.max(Math.max(this.x, this.y), this.z);
-    this.x = this.x / max;
-    this.y = this.y / max;
-    this.z = this.z / max;
+    const max = Math.max(Math.max(Math.abs(this.x), Math.abs(this.y)), Math.abs(this.z));
+    if (max !== 0) {
+      this.x = this.x / max;
+      this.y = this.y / max;
+      this.z = this.z / max;
+    }
   }
 };

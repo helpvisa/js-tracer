@@ -1,12 +1,14 @@
 // normalize a given vector
 function normalizeVector(vector) {
-  const max = Math.max(Math.max(vector.x, vector.y), vector.z);
+  const max = Math.max(Math.max(Math.abs(vector.x), Math.abs(vector.y)), Math.abs(vector.z));
   
   // normalize and return a new Vector
   let returnVector = new Vector3(vector.x, vector.y, vector.z);
-  returnVector.x = vector.x / max;
-  returnVector.y = vector.y / max;
-  returnVector.z = vector.z / max;
+  if (max !== 0) {
+    returnVector.x /= max;
+    returnVector.y /= max;
+    returnVector.z /= max;
+  }
 
   return returnVector;
 }
@@ -33,20 +35,26 @@ function subtractVectors(vec1, vec2) {
 
 // multiply a vector with a float or int
 function multiplyVector(vec, n) {
-  vec.x *= n;
-  vec.y *= n;
-  vec.z *= n;
+  let returnVector = new Vector3(vec.x, vec.y, vec.z);
 
-  return vec;
+  returnVector.x *= n;
+  returnVector.y *= n;
+  returnVector.z *= n;
+
+  return returnVector;
 }
 
 // divide a vector by a float or int
 function divideVector(vec, n) {
-  vec.x /= n;
-  vec.y /= n;
-  vec.z /= n;
+  let returnVector = new Vector3(vec.x, vec.y, vec.z);
 
-  return vec;
+  if (n !== 0) {
+    returnVector.x /= n;
+    returnVector.y /= n;
+    returnVector.z /= n;
+  }
+
+  return returnVector;
 }
 
 // find the cross product of two given vectors
@@ -74,14 +82,24 @@ function dotVectors(vec1, vec2) {
 
 // find the distance between two vectors
 function distanceBetween(vec1, vec2) {
-  let dx = vec1.x - vec2.x;
-  let dy = vec1.y - vec2.y;
-  let dz = vec1.z - vec2.z;
+  let dx = vec2.x - vec1.x;
+  let dy = vec2.y - vec1.y;
+  let dz = vec2.z - vec1.z;
 
   return Math.sqrt(dx * dx + dy * dy + dz * dz);
 }
 
+// find the squared distance between two vectors
+function distanceSquared(vec1, vec2) {
+  let dx = vec2.x - vec1.x;
+  let dy = vec2.y - vec1.y;
+  let dz = vec2.z - vec1.z;
+
+  return dx * dx + dy * dy + dz * dz;
+}
+
 // function for inverting a normal if it is not front-facing
+// this is broken; cannot simply flip my custom class, need a custom implementation
 function setFaceNormal(ray, normal) {
     let frontFace = dotVectors(ray.direction, normal) < 0;
     return frontFace ? normal : -normal;

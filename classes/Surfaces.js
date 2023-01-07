@@ -14,9 +14,9 @@ class Sphere {
   // t_min is the minimum distance allowed for a hit to register along the ray; t_max is the max allowed distance for a hit to register
   hit(ray, t_min, t_max) {
     let distance = subtractVectors(ray.origin, this.origin);
-    let a = distanceBetween(ray.direction, new Vector3(0, 0, 0));
+    let a = distanceSquared(ray.direction, new Vector3(0, 0, 0));
     let half_b = dotVectors(distance, ray.direction);
-    let c = distanceBetween(distance, new Vector3(0, 0, 0)) - (this.radius * this.radius);
+    let c = distanceSquared(distance, new Vector3(0, 0, 0)) - (this.radius * this.radius);
     let discriminant = (half_b * half_b) - (a * c);
 
     // perform a check on the discriminant to see if the ray actually hit our sphere
@@ -39,7 +39,7 @@ class Sphere {
     let t = sqrt; // the distance along the ray our collision lies at
     let point = ray.getPos(t); // the point in world space the ray collided at
     let normal = normalizeVector(divideVector(subtractVectors(point, this.origin), this.radius)); // get the normal of the point on the sphere we hit
-    normal = setFaceNormal(ray, normal); // invert this normal if it is facing inward (we hit the inside of the sphere)
+    // normal = setFaceNormal(ray, normal); // invert this normal if it is facing inward (we hit the inside of the sphere)
 
     // create a record of the information from this hit and return it as an object
     let hitObj = {

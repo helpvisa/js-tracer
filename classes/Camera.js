@@ -10,10 +10,10 @@ class Camera {
 
     // perform calculations based on inputs
     // generate screen UVs
-    theta = toRadians(fov);
-    h = Math.tan(theta / 2);
+    let theta = toRadians(fov);
+    let h = Math.tan(theta / 2);
     this.viewportHeight = 2 * h;
-    this.viewportWidth = viewportHeight * ratio;
+    this.viewportWidth = this.viewportHeight * ratio;
 
     let w = normalizeVector(subtractVectors(this.origin, this.direction));
     let u = normalizeVector(crossVectors(new Vector3(0,1,0), w));
@@ -21,11 +21,17 @@ class Camera {
 
     this.horizontal = multiplyVector(u, this.viewportWidth);
     this.vertical = multiplyVector(v, this.viewportHeight);
-    this.lowerLeftCorner = subtractVectors(divideVector(subtractVectors(this.origin, this.horizontal), 2), subtractVectors(divideVector(this.vertical, 2), w));
+    this.lowerLeftCorner = subtractVectors(this.origin, subtractVectors(subtractVectors(divideVector(this.horizontal, 2), divideVector(this.vertical, 2)), w));
   };
 
   // methods
-  returnRay(u, v) {
-    // code to manage custom rays here
+  castRay(u, v) {
+    const uu = multiplyVector(this.horizontal, u);
+    const vv = multiplyVector(this.vertical, v);
+    const add = addVectors(uu, vv);
+    const addadd = addVectors(this.lowerLeftCorner, add);
+    const addaddsub = subtractVectors(addadd, this.origin);
+
+    return new Ray(this.origin, addaddsub);
   }
 }
