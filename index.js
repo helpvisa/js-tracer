@@ -9,7 +9,12 @@ let tick = 0;
 // define our camera
 const camera = new Camera(new Vector3(0, 0, 0), new Vector3(0, 0, 1), 60, ratio);
 // define our world (only one sphere atm)
-const world = new Sphere(new Vector3(0, -4, -60), 20);
+const sphere1 = new Sphere(new Vector3(0, -4, -60), 20);
+const sphere2 = new Sphere(new Vector3(-20, 13, -40), 8);
+const sphere3 = new Sphere(new Vector3(20, -13, -40), 8);
+const sphere4 = new Sphere(new Vector3(20, 13, -40), 8);
+const sphere5 = new Sphere(new Vector3(-20, -13, -40), 8);
+const world = [sphere1, sphere2, sphere3, sphere4, sphere5];
 
 
 //== define and manage page elements ==//
@@ -32,10 +37,10 @@ const context = canvas.getContext("2d");
 const buffer = context.createImageData(width, height);
 // wrap a function to move the world, then cast a ray into the world
 function animateWorld() {
-  moveWorld();
+  moveObject(sphere1);
   raytrace();
 }
-setInterval(animateWorld, 33.333);
+setInterval(animateWorld, 66.666);
 
 
 //== function declaration ==//
@@ -56,7 +61,7 @@ function raytrace() {
       const ray = camera.castRay(u, v);
 
       // intersect this ray with the world
-      colour = intersectWorldNormals(ray, world);
+      colour = intersectWorldNormals(ray, world, 0, Infinity);
 
       // paint this colour to the buffer at the appropriate index
       const index = getIndex(x, y, width);
@@ -114,7 +119,7 @@ function getIndex(x, y, width) {
 }
 
 // moves the world
-function moveWorld() {
+function moveObject(obj) {
   tick += 0.25;
-  world.origin.y += Math.sin(tick);
+  obj.origin.y += Math.sin(tick);
 }
