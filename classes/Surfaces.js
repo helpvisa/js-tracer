@@ -14,9 +14,9 @@ class Sphere {
   // t_min is the minimum distance allowed for a hit to register along the ray; t_max is the max allowed distance for a hit to register
   hit(ray, t_min, t_max) {
     let distance = subtractVectors(ray.origin, this.origin);
-    let a = squaredDistanceBetween(ray.direction, new Vector3(0, 0, 0));
+    let a = distanceBetween(ray.direction, new Vector3(0, 0, 0));
     let half_b = dotVectors(distance, ray.direction);
-    let c = squaredDistanceBetween(distance, new Vector3(0, 0, 0)) - (this.radius * this.radius);
+    let c = distanceBetween(distance, new Vector3(0, 0, 0)) - (this.radius * this.radius);
     let discriminant = (half_b * half_b) - (a * c);
 
     // perform a check on the discriminant to see if the ray actually hit our sphere

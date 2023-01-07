@@ -72,6 +72,15 @@ function dotVectors(vec1, vec2) {
   return product;
 }
 
+// find the distance between two vectors
+function distanceBetween(vec1, vec2) {
+  let dx = vec1.x - vec2.x;
+  let dy = vec1.y - vec2.y;
+  let dz = vec1.z - vec2.z;
+
+  return Math.sqrt(dx * dx + dy * dy + dz * dz);
+}
+
 // function for inverting a normal if it is not front-facing
 function setFaceNormal(ray, normal) {
     let frontFace = dotVectors(ray.direction, normal) < 0;
