@@ -39,7 +39,7 @@ class Sphere {
     let t = sqrt; // the distance along the ray our collision lies at
     let point = ray.getPos(t); // the point in world space the ray collided at
     let normal = normalizeVector(divideVector(subtractVectors(point, this.origin), this.radius)); // get the normal of the point on the sphere we hit
-    // normal = setFaceNormal(ray, normal); // invert this normal if it is facing inward (we hit the inside of the sphere)
+    normal = setFaceNormal(ray, normal); // invert this normal if it is facing inward (we hit the inside of the sphere)
 
     // create a record of the information from this hit and return it as an object
     let hitObj = {

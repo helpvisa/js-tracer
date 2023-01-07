@@ -8,6 +8,9 @@ let ratio = width / height;
 let tick = 0;
 // current sample (for accumulation multisampling)
 let sample = 0;
+// set the depth of our samples (# of bounces)
+const depth = 4;
+
 // define our camera
 const camera = new Camera(new Vector3(0, 0, 0), new Vector3(0, 0, 1), 60, ratio);
 // define our world `
@@ -64,7 +67,8 @@ function raytrace() {
       const ray = camera.castRay(u, v);
 
       // intersect this ray with the world
-      colour = intersectWorldNormals(ray, world, 0, Infinity);
+      // colour = intersectWorldNormals(ray, world, 0, Infinity);
+      colour = intersectWorldColour(ray, world, 0, Infinity, new Vector3(1, 1, 1), depth);
 
       // paint this colour to the buffer at the appropriate index
       const index = getIndex(x, y, width);

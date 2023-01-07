@@ -1,15 +1,5 @@
 // defines functions which intersect a given ray with the world and get it to return a colour value
-// old, single-object version of renderer
-// 'world' is an object within the world
-// function intersectWorldNormals(ray, world) {
-//   // renders the normals of each object the ray hits within the world
-//   const hit = world.hit(ray, 0, Infinity);
-//   if (hit) {
-//     return multiplyVector(hit.normal, 200);
-//   }
-//   return multiplyVector(ray.direction, 200);
-// }
-
+// intersect with the world and display the normals of all the objects hit
 function intersectWorldNormals(ray, world, t_min, t_max) {
   // world is a list of our surfaces; let's iterate through it and check our ray collisions
   let rayCollided = false;
@@ -26,9 +16,42 @@ function intersectWorldNormals(ray, world, t_min, t_max) {
       }
     }
 
-    return finalObj ? multiplyVector(finalObj.normal, 200) : multiplyVector(ray.direction, 200);
+    return finalObj ? multiplyVector(finalObj.normal, 255) : multiplyVector(ray.direction, 255);
   }
   
   // return the ray direction if nothing is in the world
-  return multiplyVector(ray.direction, 200);
+  return multiplyVector(ray.direction, 255);
+}
+
+// intersect with the world and return a single diffuse colour
+function intersectWorldColour(ray, world, t_min, t_max, colour = new Vector3(1, 1, 1), depth) {
+  if (depth < 1) {
+    return colour;
+  }
+
+  let closestSoFar = t_max;
+  let finalObj;
+
+  if (world.length > 0) {
+    for (let i = 0; i < world.length; i++) {
+      const hit = world[i].hit(ray, t_min, t_max);
+      if (hit) {
+        closestSoFar = hit.t;
+        finalObj = hit;
+      }
+    }
+
+    // if we have a hit registered, recursively cast more rays into the scene
+    if (finalObj) {
+      // set a new target for the recursively cast ray
+      const target = addVectors(finalObj.point, finalObj.normal);
+      const recursiveRay = new Ray(finalObj.point, subtractVectors(target, finalObj.point));
+      return intersectWorldColour(recursiveRay, world, 0, Infinity, colour, depth - 1);
+    } else {
+      return multiplyVector(ray.direction, 255);
+    }
+  }
+
+  // return the ray direction if nothing is in the world
+  return multiplyVector(ray.direction, 255);
 }

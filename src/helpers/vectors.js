@@ -102,5 +102,13 @@ function distanceSquared(vec1, vec2) {
 // this is broken; cannot simply flip my custom class, need a custom implementation
 function setFaceNormal(ray, normal) {
     let frontFace = dotVectors(ray.direction, normal) < 0;
-    return frontFace ? normal : -normal;
+
+    if (frontFace) {
+      return normal;
+    } else {
+      normal.x *= -1;
+      normal.y *= -1;
+      normal.z *= -1;
+      return normal;
+    }
 }
