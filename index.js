@@ -1,13 +1,15 @@
 //== variable declaration ==//
 // define the width and height of our canvas, and determine its aspect ratio
 // 1920x1080 is not a sane value; most likely the canvas should be scaled/stretched to fit the screen after it has finished rendering
-let width = 100;
-let height = 100;
+let width = 200;
+let height = 200;
 let ratio = width / height;
+// current tick (for animation)
+let tick = 0;
 // define our camera
 const camera = new Camera(new Vector3(0, 0, 0), new Vector3(0, 0, 1), 20, ratio);
 // define our world (only one sphere atm)
-const world = new Sphere(new Vector3(0, 21, -60), 5);
+const world = new Sphere(new Vector3(0, 17, -60), 5);
 
 
 //== define and manage page elements ==//
@@ -28,7 +30,8 @@ const context = canvas.getContext("2d");
 
 // create the ImageData object to which we will render our pixels offscreen
 const buffer = context.createImageData(width, height);
-raytrace();
+setInterval(moveWorld, 33.333);
+setInterval(raytrace, 33.333);
 
 
 //== function declaration ==//
@@ -104,4 +107,10 @@ function fillBufferRandom() {
 function getIndex(x, y, width) {
   const redIndex = y * (width * 4) + x * 4;
   return redIndex;
+}
+
+// moves the world
+function moveWorld() {
+  tick += 0.25;
+  world.origin.y += Math.sin(tick);
 }
