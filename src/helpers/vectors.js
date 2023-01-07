@@ -11,6 +11,44 @@ function normalizeVector(vector) {
   return returnVector;
 }
 
+// add a vector with another vector
+function addVectors(vec1, vec2) {
+  let returnVector = new Vector3(0, 0, 0);
+  returnVector.x = vec1.x + vec2.x;
+  returnVector.y = vec1.y + vec2.y;
+  returnVector.z = vec1.z + vec2.z;
+
+  return returnVector;
+}
+
+// subtract a vector from another vector
+function subtractVectors(vec1, vec2) {
+  let returnVector = new Vector3(0, 0, 0);
+  returnVector.x = vec1.x - vec2.x;
+  returnVector.y = vec1.y - vec2.y;
+  returnVector.z = vec1.z - vec2.z;
+
+  return returnVector;
+}
+
+// multiply a vector with a float or int
+function multiplyVector(vec, n) {
+  vec.x *= n;
+  vec.y *= n;
+  vec.z *= n;
+
+  return vec;
+}
+
+// divide a vector by a float or int
+function divideVector(vec, n) {
+  vec.x /= n;
+  vec.y /= n;
+  vec.z /= n;
+
+  return vec;
+}
+
 // find the cross product of two given vectors
 function crossVectors(vec1, vec2) {
   let returnVector = new Vector3(0, 0, 0);
@@ -32,4 +70,10 @@ function dotVectors(vec1, vec2) {
     vec1.z * vec2.z;
   
   return product;
+}
+
+// function for inverting a normal if it is not front-facing
+function setFaceNormal(ray, normal) {
+    let frontFace = dotVectors(ray.direction, normal) < 0;
+    return frontFace ? normal : -normal;
 }
