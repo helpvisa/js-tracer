@@ -34,7 +34,7 @@ context.imageSmoothingEnabled = false;
 
 // create the ImageData object to which we will render our pixels offscreen
 const buffer = context.createImageData(width, height);
-fillBuffer();
+setInterval(fillBuffer, 16.666);
 
 
 //== function declaration ==//
