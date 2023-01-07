@@ -6,10 +6,12 @@ let height = 240;
 let ratio = width / height;
 // current tick (for animation)
 let tick = 0;
+// current sample (for accumulation multisampling)
+let sample = 0;
 // define our camera
 const camera = new Camera(new Vector3(0, 0, 0), new Vector3(0, 0, 1), 60, ratio);
-// define our world (only one sphere atm)
-const sphere1 = new Sphere(new Vector3(0, -4, -60), 20);
+// define our world `
+const sphere1 = new Sphere(new Vector3(0, 0, -60), 20);
 const sphere2 = new Sphere(new Vector3(-20, 13, -40), 8);
 const sphere3 = new Sphere(new Vector3(20, -13, -40), 8);
 const sphere4 = new Sphere(new Vector3(20, 13, -40), 8);
@@ -34,28 +36,29 @@ main.appendChild(canvas);
 const context = canvas.getContext("2d");
 
 // create the ImageData object to which we will render our pixels offscreen
-const buffer = context.createImageData(width, height);
-// wrap a function to move the world, then cast a ray into the world
+const renderBuffer = context.createImageData(width, height);
+// wrap a function to move the world
 function animateWorld() {
   moveObject(sphere1);
-  raytrace();
 }
-setInterval(animateWorld, 66.666);
+// setInterval(animateWorld, 1);
+setInterval(raytrace, 100);
 
 
 //== function declaration ==//
 // use the camera to cast rays
 function raytrace() {
+  sample += 1;
   // get our buffer data
-  const data = buffer.data;
+  const renderData = renderBuffer.data;
 
   // iterate through each pixel and cast a ray from it with our camera class
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       let colour = new Vector3(0, 0, 0);
       // randomize UVs here, eventually, for multisample operations
-      const u = x / width;
-      const v = y / height;
+      const u = (x + (Math.random() * 1 - 0.5)) / width;
+      const v = (y + (Math.random() * 1 - 0.5)) / height;
 
       // cast our ray and store it
       const ray = camera.castRay(u, v);
@@ -65,15 +68,18 @@ function raytrace() {
 
       // paint this colour to the buffer at the appropriate index
       const index = getIndex(x, y, width);
-      data[index] = colour.x; // red channel
-      data[index + 1] = colour.y; // green channel
-      data[index + 2] = colour.z; // blue channel
-      data[index + 3] = 255; // full alpha
+      renderData[index] *= 1 - (1 / sample);
+      renderData[index + 1] *= 1 - (1 / sample);
+      renderData[index + 2] *= 1 - (1 / sample);
+      renderData[index] += colour.x * (1 / sample); // red channel
+      renderData[index + 1] += colour.y * (1 / sample); // green channel
+      renderData[index + 2] += colour.z * (1 / sample); // blue channel
+      renderData[index + 3] = 255; // full alpha
     }
   }
 
   // update the on-browser image
-  context.putImageData(buffer, 0, 0);
+  context.putImageData(renderBuffer, 0, 0);
 }
 
 // fills the buffer with one specific colour
@@ -120,6 +126,6 @@ function getIndex(x, y, width) {
 
 // moves the world
 function moveObject(obj) {
-  tick += 0.25;
+  tick += 0.01;
   obj.origin.y += Math.sin(tick);
 }
