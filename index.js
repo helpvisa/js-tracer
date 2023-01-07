@@ -60,15 +60,15 @@ function raytrace() {
     for (let x = 0; x < width; x++) {
       let colour = new Vector3(0, 0, 0);
       // randomize UVs here, eventually, for multisample operations
-      const u = (x + (Math.random() * 1 - 0.5)) / width;
-      const v = (y + (Math.random() * 1 - 0.5)) / height;
+      const u = (x + (Math.random() * 2 - 1)) / width;
+      const v = (y + (Math.random() * 2 - 1)) / height;
 
       // cast our ray and store it
       const ray = camera.castRay(u, v);
 
       // intersect this ray with the world
       // colour = intersectWorldNormals(ray, world, 0, Infinity);
-      colour = intersectWorldColour(ray, world, 0, Infinity, new Vector3(1, 1, 1), depth);
+      colour = intersectWorldColour(ray, world, 0, Infinity, new Vector3(255, 255, 255), depth);
 
       // paint this colour to the buffer at the appropriate index
       const index = getIndex(x, y, width);

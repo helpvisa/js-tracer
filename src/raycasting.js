@@ -23,8 +23,8 @@ function intersectWorldNormals(ray, world, t_min, t_max) {
   return multiplyVector(ray.direction, 255);
 }
 
-// intersect with the world and return a single diffuse colour
-function intersectWorldColour(ray, world, t_min, t_max, colour = new Vector3(1, 1, 1), depth) {
+// intersect with the world and return a single diffuse colour for all objects
+function intersectWorldColour(ray, world, t_min, t_max, colour = new Vector3(255, 255, 255), depth) {
   if (depth < 1) {
     return colour;
   }
@@ -44,14 +44,20 @@ function intersectWorldColour(ray, world, t_min, t_max, colour = new Vector3(1, 
     // if we have a hit registered, recursively cast more rays into the scene
     if (finalObj) {
       // set a new target for the recursively cast ray
-      const target = addVectors(finalObj.point, finalObj.normal);
+      let target = addVectors(finalObj.point, finalObj.normal);
+      let unitSphereVector = randomUnitSphereVector();
+      unitSphereVector = normalizeVector(unitSphereVector);
+      target = addVectors(target, unitSphereVector);
       const recursiveRay = new Ray(finalObj.point, subtractVectors(target, finalObj.point));
-      return intersectWorldColour(recursiveRay, world, 0, Infinity, colour, depth - 1);
+      return multiplyVector(intersectWorldColour(recursiveRay, world, 0, Infinity, colour, depth - 1), 0.7);
     } else {
-      return multiplyVector(ray.direction, 255);
+      const dir = normalizeVector(ray.direction);
+      const t = dir.y + 1.75;
+      return multiplyVector(addVectors(multiplyVector(new Vector3(0.85, 0.75, 1), t), multiplyVector(new Vector3(1, 1, 1), (1 - t))), 255);
     }
   }
 
   // return the ray direction if nothing is in the world
-  return multiplyVector(ray.direction, 255);
+  const dir = normalizeVector(ray.direction);
+  return multiplyVector(dir, 255);
 }

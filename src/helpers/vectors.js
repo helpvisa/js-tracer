@@ -112,3 +112,19 @@ function setFaceNormal(ray, normal) {
       return normal;
     }
 }
+
+//== generate and return random vectors ==//
+// generate a random vector
+function randomVector() {
+  return new Vector3(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1); // between -1  and 1
+}
+
+// generate a random unit sphere vector
+function randomUnitSphereVector() {
+  while (true)
+    {
+        let p = randomVector();
+        if (distanceSquared(p, new Vector3(0,0,0)) >=1) continue;
+        return p;
+    }
+}
