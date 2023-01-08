@@ -66,7 +66,7 @@ function intersectWorldColour(ray, world, t_min, t_max, depth, colour = new Vect
 }
 
 // intersect with the world and return colours based on the surface's material (full raytracing stack)
-function intersectWorld(ray, world, t_min, t_max, depth) {
+function intersectWorld(ray, world, t_min, t_max, depth, lights, firstPass = false) {
   if (depth < 1) {
     return new Vector3(0, 0, 0);
   }
@@ -90,6 +90,23 @@ function intersectWorld(ray, world, t_min, t_max, depth) {
       let unitSphereVector = randomUnitSphereVector();
       unitSphereVector = normalizeVector(unitSphereVector);
       let recursiveRay;
+      let lightColour = new Vector3(0, 0, 0);
+
+      // if this is last bounce, cast ray to each light in scene
+      if (lights) {
+        let numLights = lights.length;
+        lightColour = new Vector3(0, 0, 0);
+        // iterate through light sources
+        for (let i = 0; i < numLights; i++) {
+          let target = lights[i].origin;
+          target = addVectors(target, multiplyVector(randomVector(), lights[i].radius));
+          const recursiveRay = new Ray(finalObj.point, subtractVectors(target, finalObj.point));
+          
+          currentSample = multiplyVector(intersectLight(recursiveRay, world, 0.001, Infinity), 255);
+          lightColour = addVectors(lightColour, currentSample);
+        }
+        lightColour = clampVector(mixColours(finalObj.material.colour, lightColour), 0, 255);
+      }
 
       // switch statement which determines how to mix the final colours
       switch (finalObj.material.type) {
@@ -100,8 +117,7 @@ function intersectWorld(ray, world, t_min, t_max, depth) {
           recursiveRay = new Ray(finalObj.point, subtractVectors(target, finalObj.point));
 
           // cast our recursive ray with the colour mixed in
-          return mixColours(finalObj.material.colour, intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1));
-          break;
+          return clampVector(addVectors(lightColour, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights), 0.5)), 0, 255);
         case 2:
           // set a new target for the recursively cast ray based on the material we are hitting
           target = addVectors(finalObj.point, finalObj.normal);
@@ -109,29 +125,19 @@ function intersectWorld(ray, world, t_min, t_max, depth) {
           recursiveRay = new Ray(finalObj.point, subtractVectors(target, finalObj.point));
 
           // cast our ray
-          return addVectors(multiplyVector(finalObj.material.colour, 255), mixColours(finalObj.material.colour, intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1)));
-          break;
+          return multiplyVector(finalObj.material.colour, 255);
       }
-
-    } else {
-      const dir = normalizeVector(ray.direction);
-      const t = dir.y + 0.7;
-      return addVectors(multiplyVector(new Vector3(0, 0, 0), t), multiplyVector(new Vector3(100, 50, 50), (1 - t)));
     }
   }
 
-  // return the sky if nothing is in the world
+  // return the sky
   const dir = normalizeVector(ray.direction);
-  const t = dir.y + 1;
-  return addVectors(multiplyVector(new Vector3(0, 0, 0), t), multiplyVector(new Vector3(255, 255, 255), (1 - t)));
+  const t = dir.y + 0;
+  return addVectors(multiplyVector(new Vector3(75, 16, 25), t), multiplyVector(new Vector3(20, 4, 8), (1 - t)));
 }
 
-// intersect with the world and return colours based on the surface's material (biased towards lights)
-function intersectWorldLightBiased(ray, world, t_min, t_max, depth, lights) {
-  if (depth < 1) {
-    return new Vector3(0, 0, 0);
-  }
-
+// used to cast only to rays
+function intersectLight(ray, world, t_min, t_max) {
   let closestSoFar = t_max;
   let finalObj;
 
@@ -145,34 +151,13 @@ function intersectWorldLightBiased(ray, world, t_min, t_max, depth, lights) {
       }
     }
 
-    // if we have a hit registered, recursively cast more rays into the scene
     if (finalObj) {
-      // pick a random light source
-      const idx = Math.floor(Math.random() * lights.length);
-      let target = addVectors(lights[idx].origin, multiplyVector(randomVector(), lights[idx].radius * lights[idx].material.softness));
-      const recursiveRay = new Ray(finalObj.point, subtractVectors(target, finalObj.point));
-
-      // switch statement which determines how to mix the final colours
-      switch (finalObj.material.type) {
-        case 0: // basic diffuse surface
-          // cast our recursive ray with the colour mixed in
-          return mixColours(finalObj.material.colour, intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1));
-          break;
-        case 2: // lights
-          // cast our ray
-          return addVectors(multiplyVector(finalObj.material.colour, 255), mixColours(finalObj.material.colour, intersectWorldLightBiased(recursiveRay, world, 0.001, Infinity, depth - 1, lights)));
-          break;
+      // is this obj a light?
+      if (finalObj.material.type === 2) {
+        return finalObj.material.colour;
       }
-
-    } else {
-      const dir = normalizeVector(ray.direction);
-      const t = dir.y + 0.7;
-      return addVectors(multiplyVector(new Vector3(0, 0, 0), t), multiplyVector(new Vector3(100, 50, 50), (1 - t)));
     }
   }
-
-  // return the sky if nothing is in the world
-  const dir = normalizeVector(ray.direction);
-  const t = dir.y + 1;
-  return addVectors(multiplyVector(new Vector3(0, 0, 0), t), multiplyVector(new Vector3(255, 255, 255), (1 - t)));
+  // return the void
+  return new Vector3(0, 0, 0);
 }

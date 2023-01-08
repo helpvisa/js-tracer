@@ -9,24 +9,23 @@ let oldSamples = 0;
 let tick = 0;
 // current sample (for accumulation multisampling) and set a max sample rate
 let sample = 0;
-let maxSamples = 1000;
+let maxSamples = 5000;
 // set the depth of our samples (# of bounces)
-const depth = 4;
+const depth = 3;
 
 // define our camera
 const camera = new Camera(new Vector3(0, 0, 0), new Vector3(0, 0, 1), 60, ratio);
 
 // define our materials
 // define our lights
-const greenLight = new Material(2, new Vector3(0.1, 5, 0.1));
-greenLight.softness = 8;
+const light = new Material(2, new Vector3(0.5, 6, 0.5));
 
 // define our world `
-const sphere1 = new Sphere(new Vector3(0, 0, -60), 25);
-const sphere2 = new Sphere(new Vector3(-20, 13, -40), 8, new Material(0, new Vector3(1, 0.1, 0.1)));
-const sphere3 = new Sphere(new Vector3(20, -13, -40), 2, greenLight);
-const sphere4 = new Sphere(new Vector3(20, 13, -40), 8, new Material(0, new Vector3(0.1, 0.1, 1)));
-const sphere5 = new Sphere(new Vector3(-20, -13, -40), 8, new Material(0, new Vector3(1, 0.1, 1)));
+const sphere1 = new Sphere(new Vector3(0, 0, -60), 18, new Material(0, new Vector3(1, 1, 1)));
+const sphere2 = new Sphere(new Vector3(-20, 13, -40), 8, new Material(0, new Vector3(1, 0.01, 0.01)));
+const sphere3 = new Sphere(new Vector3(20, -20, -40), 12, light);
+const sphere4 = new Sphere(new Vector3(20, 13, -40), 8, new Material(0, new Vector3(0.01, 0.01, 1)));
+const sphere5 = new Sphere(new Vector3(-20, -13, -40), 8, new Material(0, new Vector3(1, 0.01, 1)));
 const world = [sphere1, sphere2, sphere3, sphere4, sphere5];
 const lights = [sphere3]; // for biased raytracing
 
@@ -81,8 +80,6 @@ function raytrace() {
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       // create vectors which store the unbiased traces and the biased traces, and the final colour
-      let colourUnbiased = new Vector3(0, 0, 0);
-      let colourBiased = new Vector3(0, 0, 0);
       let colour = new Vector3(0, 0, 0);
       // randomize UVs here, eventually, for multisample operations
       const u = (x + (Math.random() * 2 - 1)) / width;
@@ -92,12 +89,7 @@ function raytrace() {
       const ray = camera.castRay(u, v);
 
       // intersect this ray with the world
-      // colour = intersectWorldNormals(ray, world, 0, Infinity);
-      // regular trace
-      colourUnbiased = multiplyVector(intersectWorld(ray, world, 0.001, Infinity, depth), 0.5);
-      // trace biased toward light sources
-      colourBiased = multiplyVector(intersectWorldLightBiased(ray, world, 0.001, Infinity, depth, lights), 0.5);
-      colour = addVectors(colourUnbiased, colourBiased);
+      colour = intersectWorld(ray, world, 0.001, Infinity, depth, lights, true);
 
       // paint this colour to the buffer at the appropriate index
       const index = getIndex(x, y, width);

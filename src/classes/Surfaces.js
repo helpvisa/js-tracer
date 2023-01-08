@@ -5,7 +5,6 @@
 class Sphere {
   constructor(origin = new Vector3(0,0,0), radius = 3, material = new Material()) {
     this.origin = origin;
-    this.center = origin;
     this.radius = radius;
     this.material = material;
   };
@@ -28,18 +27,18 @@ class Sphere {
     let sqrtDisc = Math.sqrt(discriminant);
 
     // find nearest root within our acceptable t (ray) range
-    let sqrt = (-half_b - sqrtDisc) / a;
-    if (sqrt < t_min || t_max < sqrt) {
-      sqrt = (-half_b + sqrtDisc) / a;
-      if (sqrt < t_min || t_max < sqrt) {
+    let rt = (-half_b - sqrtDisc) / a;
+    if (rt < t_min || t_max < rt) {
+      rt = (-half_b + sqrtDisc) / a;
+      if (rt < t_min || t_max < rt) {
         return false;
       }
     }
 
     // if we have made it this far without returning, we have hit the sphere and are within our t range, and so can return a value for t
-    let t = sqrt; // the distance along the ray our collision lies at
+    let t = rt; // the distance along the ray our collision lies at
     let point = ray.getPos(t); // the point in world space the ray collided at
-    let normal = normalizeVector(divideVector(subtractVectors(point, this.origin), this.radius)); // get the normal of the point on the sphere we hit
+    let normal = divideVector(subtractVectors(point, this.origin), this.radius); // get the normal of the point on the sphere we hit
     normal = setFaceNormal(ray, normal); // invert this normal if it is facing inward (we hit the inside of the sphere)
 
     // create a record of the information from this hit and return it as an object

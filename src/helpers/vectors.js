@@ -113,6 +113,16 @@ function setFaceNormal(ray, normal) {
     }
 }
 
+// clamp a vector's values within a range (useful for colours)
+function clampVector(vec, min, max) {
+  let returnVector = vec;
+  returnVector.x = clamp(returnVector.x, min, max);
+  returnVector.y = clamp(returnVector.y, min, max);
+  returnVector.z = clamp(returnVector.z, min, max);
+
+  return returnVector;
+}
+
 //== generate and return random vectors ==//
 // generate a random vector
 function randomVector() {
