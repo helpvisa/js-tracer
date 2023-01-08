@@ -106,10 +106,14 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
             for (let i = 0; i < numLights; i++) {
               let target = lights[i].origin;
               target = addVectors(target, multiplyVector(randomVector(), lights[i].radius));
-              const recursiveRay = new Ray(finalObj.point, subtractVectors(target, finalObj.point));
-              
-              currentSample = multiplyVector(intersectLight(recursiveRay, world, 0.001, Infinity), 255);
-              lightColour = addVectors(lightColour, currentSample);
+              const rayDir = subtractVectors(target, finalObj.point);
+
+              // get the dot of normal - light; only cast ray if it can actually hit light
+              const dot = dotVectors(rayDir, finalObj.normal);
+              if (dot > 0) {
+                const recursiveRay = new Ray(finalObj.point, subtractVectors(target, finalObj.point));
+                lightColour = multiplyVector(intersectLight(recursiveRay, world, 0.001, Infinity), 255);
+              }
             }
             lightColour = clampVector(mixColours(finalObj.material.colour, lightColour), 0, 255);
           }
