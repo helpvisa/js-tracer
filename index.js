@@ -11,21 +11,25 @@ let tick = 0;
 let sample = 0;
 let maxSamples = 5000;
 // set the depth of our samples (# of bounces)
-const depth = 3;
+const depth = 2;
+
+// define our sky parameters (zero vectors are pitch black)
+let skyTop = new Vector3(100, 100, 100);
+let skyBottom = new Vector3(255, 164, 0);
 
 // define our camera
 const camera = new Camera(new Vector3(0, 0, 0), new Vector3(0, 0, 1), 60, ratio);
 
 // define our materials
 // define our lights
-const light = new Material(2, new Vector3(0.5, 6, 0.5));
+const light = new Material(2, new Vector3(0.68, 6, 0.90));
 
 // define our world `
 const sphere1 = new Sphere(new Vector3(0, 0, -60), 18, new Material(0, new Vector3(1, 1, 1)));
-const sphere2 = new Sphere(new Vector3(-20, 13, -40), 8, new Material(0, new Vector3(1, 0.01, 0.01)));
+const sphere2 = new Sphere(new Vector3(-20.5, 13, -49), 8, new Material(0, new Vector3(1, 0.01, 0.01)));
 const sphere3 = new Sphere(new Vector3(20, -20, -40), 12, light);
 const sphere4 = new Sphere(new Vector3(20, 13, -40), 8, new Material(0, new Vector3(0.01, 0.01, 1)));
-const sphere5 = new Sphere(new Vector3(-20, -13, -40), 8, new Material(0, new Vector3(1, 0.01, 1)));
+const sphere5 = new Sphere(new Vector3(-32, -4, -65), 10, new Material(0, new Vector3(1, 0.01, 1)));
 const world = [sphere1, sphere2, sphere3, sphere4, sphere5];
 const lights = [sphere3]; // for biased raytracing
 
@@ -91,7 +95,7 @@ function raytrace() {
       const ray = camera.castRay(u, v);
 
       // intersect this ray with the world
-      colour = intersectWorld(ray, world, 0.001, Infinity, depth, lights, true);
+      colour = intersectWorld(ray, world, 0.001, Infinity, depth, lights, skyTop, skyBottom);
 
       // paint this colour to the buffer at the appropriate index
       const index = getIndex(x, y, width);

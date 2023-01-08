@@ -24,6 +24,7 @@ function intersectWorldNormals(ray, world, t_min, t_max) {
   return multiplyVector(ray.direction, 255);
 }
 
+
 // intersect with the world and return a single diffuse colour for all objects
 function intersectWorldColour(ray, world, t_min, t_max, depth, colour = new Vector3(1, 1, 1)) {
   if (depth < 1) {
@@ -65,8 +66,9 @@ function intersectWorldColour(ray, world, t_min, t_max, depth, colour = new Vect
   return addVectors(multiplyVector(new Vector3(0, 0, 0), t), multiplyVector(new Vector3(0, 0, 0), (1 - t)));
 }
 
+
 // intersect with the world and return colours based on the surface's material (full raytracing stack)
-function intersectWorld(ray, world, t_min, t_max, depth, lights, firstPass = false) {
+function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBottom) {
   if (depth < 1) {
     return new Vector3(0, 0, 0);
   }
@@ -90,34 +92,35 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, firstPass = fal
       let unitSphereVector = randomUnitSphereVector();
       unitSphereVector = normalizeVector(unitSphereVector);
       let recursiveRay;
-      let lightColour = new Vector3(0, 0, 0);
-
-      // if this is last bounce, cast ray to each light in scene
-      if (lights) {
-        let numLights = lights.length;
-        lightColour = new Vector3(0, 0, 0);
-        // iterate through light sources
-        for (let i = 0; i < numLights; i++) {
-          let target = lights[i].origin;
-          target = addVectors(target, multiplyVector(randomVector(), lights[i].radius));
-          const recursiveRay = new Ray(finalObj.point, subtractVectors(target, finalObj.point));
-          
-          currentSample = multiplyVector(intersectLight(recursiveRay, world, 0.001, Infinity), 255);
-          lightColour = addVectors(lightColour, currentSample);
-        }
-        lightColour = clampVector(mixColours(finalObj.material.colour, lightColour), 0, 255);
-      }
 
       // switch statement which determines how to mix the final colours
       switch (finalObj.material.type) {
         case 0:
+          // perform a light pass if lights exist and the material is illuminated by them
+          // this should be branched into its own function
+          let lightColour = new Vector3(0, 0, 0);
+          if (lights) {
+            let numLights = lights.length;
+            lightColour = new Vector3(0, 0, 0);
+            // iterate through light sources
+            for (let i = 0; i < numLights; i++) {
+              let target = lights[i].origin;
+              target = addVectors(target, multiplyVector(randomVector(), lights[i].radius));
+              const recursiveRay = new Ray(finalObj.point, subtractVectors(target, finalObj.point));
+              
+              currentSample = multiplyVector(intersectLight(recursiveRay, world, 0.001, Infinity), 255);
+              lightColour = addVectors(lightColour, currentSample);
+            }
+            lightColour = clampVector(mixColours(finalObj.material.colour, lightColour), 0, 255);
+          }
+
           // set a new target for the recursively cast ray based on the material we are hitting
           target = addVectors(finalObj.point, finalObj.normal);
           target = addVectors(target, unitSphereVector);
           recursiveRay = new Ray(finalObj.point, subtractVectors(target, finalObj.point));
 
           // cast our recursive ray with the colour mixed in
-          return clampVector(addVectors(lightColour, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights), 0.5)), 0, 255);
+          return clampVector(addVectors(lightColour, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom), 0.5)), 0, 255);
         case 2:
           // set a new target for the recursively cast ray based on the material we are hitting
           target = addVectors(finalObj.point, finalObj.normal);
@@ -132,8 +135,8 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, firstPass = fal
 
   // return the sky
   const dir = normalizeVector(ray.direction);
-  const t = dir.y + 0;
-  return addVectors(multiplyVector(new Vector3(75, 16, 25), t), multiplyVector(new Vector3(20, 4, 8), (1 - t)));
+  const t = dir.y;
+  return addVectors(multiplyVector(skyBottom, t), multiplyVector(skyTop, (1 - t)));
 }
 
 // used to cast only to rays
