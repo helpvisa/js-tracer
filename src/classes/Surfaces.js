@@ -3,10 +3,11 @@
 
 // sphere class
 class Sphere {
-  constructor(origin = new Vector3(0,0,0), radius = 3) {
+  constructor(origin = new Vector3(0,0,0), radius = 3, material = new Material()) {
     this.origin = origin;
     this.center = origin;
     this.radius = radius;
+    this.material = material;
   };
 
   // methods
@@ -45,7 +46,8 @@ class Sphere {
     let hitObj = {
       t: t,
       point: point,
-      normal: normal
+      normal: normal,
+      material: this.material
     }
     return hitObj;
   }

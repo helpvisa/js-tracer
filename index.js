@@ -11,17 +11,24 @@ let tick = 0;
 let sample = 0;
 let maxSamples = 1000;
 // set the depth of our samples (# of bounces)
-const depth = 2;
+const depth = 4;
 
 // define our camera
 const camera = new Camera(new Vector3(0, 0, 0), new Vector3(0, 0, 1), 60, ratio);
+
+// define our materials
+// define our lights
+const greenLight = new Material(2, new Vector3(0.1, 5, 0.1));
+greenLight.softness = 8;
+
 // define our world `
 const sphere1 = new Sphere(new Vector3(0, 0, -60), 25);
-const sphere2 = new Sphere(new Vector3(-20, 13, -40), 8);
-const sphere3 = new Sphere(new Vector3(20, -13, -40), 8);
-const sphere4 = new Sphere(new Vector3(20, 13, -40), 8);
-const sphere5 = new Sphere(new Vector3(-20, -13, -40), 8);
+const sphere2 = new Sphere(new Vector3(-20, 13, -40), 8, new Material(0, new Vector3(1, 0.1, 0.1)));
+const sphere3 = new Sphere(new Vector3(20, -13, -40), 2, greenLight);
+const sphere4 = new Sphere(new Vector3(20, 13, -40), 8, new Material(0, new Vector3(0.1, 0.1, 1)));
+const sphere5 = new Sphere(new Vector3(-20, -13, -40), 8, new Material(0, new Vector3(1, 0.1, 1)));
 const world = [sphere1, sphere2, sphere3, sphere4, sphere5];
+const lights = [sphere3]; // for biased raytracing
 
 
 //== define and manage page elements ==//
@@ -59,7 +66,7 @@ function main() {
 // run it as fast as possible
 setInterval(main, 1);
 // now check how many samples are being rendered per second
-setInterval(samplesPerSecondCalc, 250);
+setInterval(samplesPerSecondCalc, 1000);
 
 
 //== function declaration ==//
@@ -73,6 +80,9 @@ function raytrace() {
   // iterate through each pixel and cast a ray from it with our camera class
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
+      // create vectors which store the unbiased traces and the biased traces, and the final colour
+      let colourUnbiased = new Vector3(0, 0, 0);
+      let colourBiased = new Vector3(0, 0, 0);
       let colour = new Vector3(0, 0, 0);
       // randomize UVs here, eventually, for multisample operations
       const u = (x + (Math.random() * 2 - 1)) / width;
@@ -83,7 +93,11 @@ function raytrace() {
 
       // intersect this ray with the world
       // colour = intersectWorldNormals(ray, world, 0, Infinity);
-      colour = intersectWorldColour(ray, world, 0, Infinity, new Vector3(1, 1, 1), depth);
+      // regular trace
+      colourUnbiased = multiplyVector(intersectWorld(ray, world, 0.001, Infinity, depth), 0.5);
+      // trace biased toward light sources
+      colourBiased = multiplyVector(intersectWorldLightBiased(ray, world, 0.001, Infinity, depth, lights), 0.5);
+      colour = addVectors(colourUnbiased, colourBiased);
 
       // paint this colour to the buffer at the appropriate index
       const index = getIndex(x, y, width);
@@ -153,7 +167,7 @@ function getIndex(x, y, width) {
 
 // calculates the # of samples being performed per second (roughly)
 function samplesPerSecondCalc() {
-  let numSinceCheck = (sample - oldSamples) * 4; // will be updated 4 times per second
+  let numSinceCheck = (sample - oldSamples); // will be updated 4 times per second
   samplesPerSecondEl.textContent = "Samples per second: " + numSinceCheck;
   oldSamples = sample;
 }
