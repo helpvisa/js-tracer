@@ -1,8 +1,8 @@
 //== variable declaration ==//
 // define the width and height of our canvas, and determine its aspect ratio
 // 1920x1080 is not a sane value; most likely the canvas should be scaled/stretched to fit the screen after it has finished rendering
-let width = 320;
-let height = 240;
+let width = 640;
+let height = 480;
 let ratio = width / height;
 // tick tracking (for animation, updating on-page values)
 let oldSamples = 0;
@@ -53,7 +53,7 @@ const context = canvas.getContext("2d");
 // create the ImageData object to which we will render our pixels offscreen
 const renderBuffer = context.createImageData(width, height);
 // const displayBuffer = context.createImageData(width, height);
-// wrap a function to call every 1/10 of a second
+// wrap a function to call for our primary render loop
 function main() {
   // update our on-page elements
   samplesEl.textContent = "Samples so far: " + sample;
@@ -61,10 +61,12 @@ function main() {
   if (sample < maxSamples) {
     raytrace();
   }
+
+  // recursively call self
+  requestAnimationFrame(main);
 }
-// run it as fast as possible
-setInterval(main, 1);
-// now check how many samples are being rendered per second
+requestAnimationFrame(main);
+// check how many samples are being rendered per second
 setInterval(samplesPerSecondCalc, 1000);
 
 
