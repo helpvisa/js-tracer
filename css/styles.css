@@ -5,3 +5,8 @@ body {
   flex-direction: column;
   align-items: center;
 }
+
+canvas {
+  display: flex;
+  width: 72vh;
+}

@@ -11,22 +11,29 @@ let tick = 0;
 let sample = 0;
 let maxSamples = 5000;
 // set the depth of our samples (# of bounces)
-const depth = 2;
+const depth = 12;
+// set a size for our perlin grid and create it
+// const perlinSize = Math.max(width, height);
+// const perlin = new Perlin(perlinSize);
 
 // define our sky parameters (zero vectors are pitch black)
 let skyTop = new Vector3(100, 100, 100);
 let skyBottom = new Vector3(255, 164, 0);
 
 // define our camera
-const camera = new Camera(new Vector3(0, 0, 0), new Vector3(0, 0, 1), 60, ratio);
+let camera = new Camera(new Vector3(0, 0, 0), new Vector3(0, 0, 1), 60, ratio);
 
 // define our materials
 // define our lights
 const light = new Material(2, new Vector3(0.68, 6, 0.90));
+const reflection1 = new Material(1, new Vector3(1, 1, 1));
+reflection1.roughness = 0;
+const reflection2 = new Material(1, new Vector3(1, 0.5, 0.5));
+reflection2.roughness = 0.35;
 
 // define our world `
-const sphere1 = new Sphere(new Vector3(0, 0, -60), 18, new Material(0, new Vector3(1, 1, 1)));
-const sphere2 = new Sphere(new Vector3(-20.5, 13, -49), 8, new Material(0, new Vector3(1, 0.01, 0.01)));
+const sphere1 = new Sphere(new Vector3(0, 0, -60), 18, reflection1);
+const sphere2 = new Sphere(new Vector3(-20.5, 13, -49), 8, reflection2);
 const sphere3 = new Sphere(new Vector3(20, -20, -40), 12, light);
 const sphere4 = new Sphere(new Vector3(20, 13, -40), 8, new Material(0, new Vector3(0.01, 0.01, 1)));
 const sphere5 = new Sphere(new Vector3(-32, -4, -65), 10, new Material(0, new Vector3(1, 0.01, 1)));
@@ -80,16 +87,16 @@ function raytrace() {
   sample += 1;
   // get our buffer data
   const renderData = renderBuffer.data;
-  // const displayData = displayBuffer.data;
 
   // iterate through each pixel and cast a ray from it with our camera class
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       // create vectors which store the unbiased traces and the biased traces, and the final colour
       let colour = new Vector3(0, 0, 0);
-      // randomize UVs here, eventually, for multisample operations
-      const u = (x + (Math.random() * 2 - 1)) / width;
-      const v = (y + (Math.random() * 2 - 1)) / height;
+      // randomize UVs here (for multisampling 'antialiasing')
+      let rand = Math.random() - 0.5;
+      const u = (x + rand) / width;
+      const v = (y + rand) / height;
 
       // cast our ray and store it
       const ray = camera.castRay(u, v);
@@ -108,12 +115,6 @@ function raytrace() {
       renderData[index + 1] += colour.y * (1 / sample); // green channel
       renderData[index + 2] += colour.z * (1 / sample); // blue channel
       renderData[index + 3] = 255; // full alpha
-
-      // apply gamma curve to rendered data by writing it to the display buffer
-      // displayData[index] = Math.pow(renderData[index], 0.9);
-      // displayData[index + 1] = Math.pow(renderData[index + 1], 0.9);
-      // displayData[index + 2] = Math.pow(renderData[index + 2], 0.9);
-      // displayData[index + 3] = renderData[index + 3];
     }
   }
 
@@ -125,7 +126,7 @@ function raytrace() {
 function fillBuffer(colour = new Vector3(15, 15, 15)) {
   // colour should be a vector4 style input (r,g,b,a)
   // get our buffer data
-  const data = buffer.data;
+  const data = renderBuffer.data;
 
   // iterate over each pixel
   for (let i = 0; i < data.length; i += 4) { // += 4 because each pixel is stored as 4 colour indices in a row (rgba)
@@ -136,25 +137,29 @@ function fillBuffer(colour = new Vector3(15, 15, 15)) {
   }
 
   // add our image data to the context
-  context.putImageData(buffer, 0, 0); // 0,0 is offset for top-left corner of buffer
+  context.putImageData(renderBuffer, 0, 0); // 0,0 is offset for top-left corner of buffer
 }
 
 // fills the buffer with randomly coloured pixels
-function fillBufferRandom() {
+function fillBufferPerlin() {
   // colour should be a vector4 style input (r,g,b,a)
   // get our buffer data
-  const data = buffer.data;
+  const data = renderBuffer.data;
 
   // iterate over each pixel
-  for (let i = 0; i < data.length; i += 4) { // += 4 because each pixel is stored as 4 colour indices in a row (rgba)
-    data[i] = Math.floor(Math.random() * 255); // red
-    data[i + 1] = Math.floor(Math.random() * 255); // green
-    data[i + 2] = Math.floor(Math.random() * 255); // blue
-    data[i + 3] = 255; // alpha
+  for (let y = 0; y < height; y++) {
+    for (let x = 0; x < width; x++) {
+      const index = getIndex(x, y, width);
+      let value = perlin.get(x / width * (perlinSize - 1), y / height * (perlinSize - 1));
+      data[index] = value; // red
+      data[index + 1] = value; // green
+      data[index + 2] = value; // blue
+      data[index + 3] = 255; // alpha
+    }
   }
 
   // add our image data to the context
-  context.putImageData(buffer, 0, 0); // 0,0 is offset for top-left corner of buffer
+  context.putImageData(renderBuffer, 0, 0); // 0,0 is offset for top-left corner of buffer
 }
 
 // returns the red index (blue, green, and alpha indices can be accesed by adding + 1, + 2, + 3 to index)

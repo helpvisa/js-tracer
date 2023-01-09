@@ -95,6 +95,7 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
 
       // switch statement which determines how to mix the final colours
       switch (finalObj.material.type) {
+        // if it is diffuse
         case 0:
           // perform a light pass if lights exist and the material is illuminated by them
           // this should be branched into its own function
@@ -105,12 +106,12 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
             // iterate through light sources
             for (let i = 0; i < numLights; i++) {
               let target = lights[i].origin;
-              target = addVectors(target, multiplyVector(randomVector(), lights[i].radius));
+              target = addVectors(target, multiplyVector(normalizedRandomVector(), lights[i].radius));
               const rayDir = subtractVectors(target, finalObj.point);
 
               // get the dot of normal - light; only cast ray if it can actually hit light
               const dot = dotVectors(rayDir, finalObj.normal);
-              if (dot > 0) {
+              if (dot >= 0) {
                 const recursiveRay = new Ray(finalObj.point, subtractVectors(target, finalObj.point));
                 lightColour = multiplyVector(intersectLight(recursiveRay, world, 0.001, Infinity), 255);
               }
@@ -125,6 +126,23 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
 
           // cast our recursive ray with the colour mixed in
           return clampVector(addVectors(lightColour, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom), 0.5)), 0, 255);
+        // if it is purely reflective
+        case 1:
+          // skip our light pass, since this is pure reflection
+
+          // set a new target based on a reflected vector
+          let surfaceNormal = finalObj.normal;
+          // add randomness if the surface has a rough characteristic
+          if (finalObj.material.roughness > 0) {
+            surfaceNormal = addVectors(finalObj.normal, multiplyVector(randomVector(), finalObj.material.roughness * finalObj.material.roughness));
+          }
+
+          target = reflectVector(ray.direction, surfaceNormal);
+          recursiveRay = new Ray(finalObj.point, target);
+          // cast our recursive ray
+          // we do not multiply the returned ray by 0.5, since it is 'pure reflection' and thus loses no energy
+          return clampVector(mixColours(finalObj.material.colour, intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom)), 0, 255);
+        // if it is a light source
         case 2:
           // set a new target for the recursively cast ray based on the material we are hitting
           target = addVectors(finalObj.point, finalObj.normal);

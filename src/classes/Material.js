@@ -4,5 +4,13 @@ class Material {
     // types are 0 = diffuse, 1 = reflective, 2 = light
     this.type = type;
     this.colour = colour;
+
+    // create new keys based on material type
+    switch (this.type) {
+      // if it is reflective
+      case 1:
+        this.roughness = 0; // a value that determines the roughness of the surface reflection
+        break;
+    }
   }
 }

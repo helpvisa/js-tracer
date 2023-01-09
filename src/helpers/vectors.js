@@ -98,6 +98,15 @@ function distanceSquared(vec1, vec2) {
   return dx * dx + dy * dy + dz * dz;
 }
 
+// reflect a vector along another vector (the normal)
+function reflectVector(vec, normal) {
+  let returnVector = new Vector3(0, 0, 0);
+
+  returnVector = subtractVectors(vec, multiplyVector(normal, dotVectors(normal, vec) * 2));
+
+  return returnVector;
+}
+
 // function for inverting a normal if it is not front-facing
 // this is broken; cannot simply flip my custom class, need a custom implementation
 function setFaceNormal(ray, normal) {
@@ -127,6 +136,12 @@ function clampVector(vec, min, max) {
 // generate a random vector
 function randomVector() {
   return new Vector3(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1); // between -1  and 1
+}
+
+function normalizedRandomVector() {
+  let returnVector = new Vector3(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1); // between -1  and 1
+  returnVector = normalizeVector(returnVector);
+  return returnVector;
 }
 
 // generate a random unit sphere vector
