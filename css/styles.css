@@ -9,4 +9,5 @@ body {
 canvas {
   display: flex;
   width: 72vh;
+  max-width: 90vw;
 }
