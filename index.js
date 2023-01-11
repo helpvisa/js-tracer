@@ -27,11 +27,11 @@ let camera = new Camera(new Vector3(0, 0, 0), new Vector3(0, 0, 1), 60, ratio);
 // define our lights
 const light = new Material(2, new Vector3(0.68, 6, 0.90));
 const reflection1 = new Material(1, new Vector3(1, 1, 1));
-reflection1.roughness = 0;
+reflection1.roughness = 0.5;
 const reflection2 = new Material(1, new Vector3(1, 0.5, 0.5));
-reflection2.roughness = 0.35;
+reflection2.roughness = 0;
 
-// define our world `
+// define our world
 const sphere1 = new Sphere(new Vector3(0, 0, -60), 18, reflection1);
 const sphere2 = new Sphere(new Vector3(-20.5, 13, -49), 8, reflection2);
 const sphere3 = new Sphere(new Vector3(20, -20, -40), 12, light);

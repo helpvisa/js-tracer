@@ -1,12 +1,42 @@
 // define our surface classes
 // these will be added to an array of objects which the rays will be checked against
 
-// sphere class
-class Sphere {
-  constructor(origin = new Vector3(0,0,0), radius = 3, material = new Material()) {
+// base class
+class Surface {
+  constructor(origin = new Vector3(0, 0, 0)) {
     this.origin = origin;
+  }
+
+  // methods
+  // this is a dummy function, it will be extended by anything that also extends this class to write custom functions
+  // but it is important to define it in order to avoid a null check
+  hit(ray, t_min, t_max) {
+    return false; // this will prevent the hit from ever registering if a blank surface somehow ends up in our world list
+  }
+
+  // calculate the AABB bounds of the current surface
+  bounding() {
+    return false; // will always return false (no bounds) for a blank surface
+  }
+}
+
+// BVH class, that wraps our world list in an AABB bounding box container hierarchically
+class BVH extends Surface {
+  constructor(surfaces = []) {
+    super(new Vector3(0,0,0));
+    this.surfaces = surfaces; // store an array of our world list
+  }
+
+
+}
+
+// sphere class
+class Sphere extends Surface {
+  constructor(origin = new Vector3(0,0,0), radius = 3, material = new Material()) {
+    super(origin);
     this.radius = radius;
     this.material = material;
+    this.bounding();
   };
 
   // methods
@@ -49,5 +79,10 @@ class Sphere {
       material: this.material
     }
     return hitObj;
+  }
+
+  // calculate this object's AABB bounding box
+  bounding() {
+    this.bounds = new AABB(this.origin + new Vector3(this.radius, this.radius, this.radius), this.origin - new Vector3(this.radius, this.radius, this.radius));
   }
 }
