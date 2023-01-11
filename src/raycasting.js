@@ -73,18 +73,16 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
     return new Vector3(0, 0, 0);
   }
 
-  let closestSoFar = t_max;
   let finalObj;
 
   if (world.length > 0) {
-    for (let i = 0; i < world.length; i++) {
-      const hit = world[i].hit(ray, t_min, t_max);
+    // for (let i = 0; i < world.length; i++) {
+      const hit = world[0].hit(ray, t_min, t_max);
       if (hit) {
-        closestSoFar = hit.t;
-        t_max = closestSoFar;
+        t_max = hit.t;
         finalObj = hit;
       }
-    }
+    // }
 
     // if we have a hit registered, recursively cast more rays into the scene
     if (finalObj) {

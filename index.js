@@ -9,7 +9,7 @@ let oldSamples = 0;
 let tick = 0;
 // current sample (for accumulation multisampling) and set a max sample rate
 let sample = 0;
-let maxSamples = 5000;
+let maxSamples = 200;
 // set the depth of our samples (# of bounces)
 const depth = 12;
 // set a size for our perlin grid and create it
@@ -38,6 +38,7 @@ const sphere3 = new Sphere(new Vector3(20, -20, -40), 12, light);
 const sphere4 = new Sphere(new Vector3(20, 13, -40), 8, new Material(0, new Vector3(0.01, 0.01, 1)));
 const sphere5 = new Sphere(new Vector3(-32, -4, -65), 10, new Material(0, new Vector3(1, 0.01, 1)));
 const world = [sphere1, sphere2, sphere3, sphere4, sphere5];
+const masterBVH = new BVH(world);
 const lights = [sphere3]; // for biased raytracing
 
 
@@ -102,7 +103,7 @@ function raytrace() {
       const ray = camera.castRay(u, v);
 
       // intersect this ray with the world
-      colour = intersectWorld(ray, world, 0.001, Infinity, depth, lights, skyTop, skyBottom);
+      colour = intersectWorld(ray, [masterBVH], 0.001, Infinity, depth, lights, skyTop, skyBottom);
 
       // paint this colour to the buffer at the appropriate index
       const index = getIndex(x, y, width);

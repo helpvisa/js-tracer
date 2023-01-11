@@ -20,14 +20,59 @@ class Surface {
   }
 }
 
-// BVH class, that wraps our world list in an AABB bounding box container hierarchically
+// BVH class that wraps our world list in an AABB bounding box container hierarchically
 class BVH extends Surface {
   constructor(surfaces = []) {
     super(new Vector3(0,0,0));
     this.surfaces = surfaces; // store an array of our world list
+    // calc our bounding box for this node
+    this.bounds = this.bounding();
   }
 
+  hit(ray, t_min, t_max) {
+    if (this.bounds && this.bounds.hit(ray)) {
+      let finalObj = false;
+      for (let i = 0; i < this.surfaces.length; i++) {
+        const hit = this.surfaces[i].hit(ray, t_min, t_max);
+        if (hit) {
+          t_max = hit.t;
+          finalObj = hit;
+        }
+      }
+      return finalObj;
+    }
+  }
 
+  // determine the bounding box of the surfaces contained within its list
+  bounding() {
+    // set bounds to false if there are no surfaces to create a bounding box for
+    if (this.surfaces.length < 1) {
+      return false;
+    }
+    
+    // is this the first attempt at creating a bounding box?
+    // used in case there is only one object in world list; sets BVH bounds to the bounds of that one objkect
+    let firstBox = true;
+    let tempBounds = new AABB(new Vector3(0,0,0), new Vector3(0,0,0));
+    let bounds = tempBounds;
+    for (let i = 0; i < this.surfaces.length; i++) {
+      if (!this.surfaces[i].bounds) {
+        return false;
+      }
+      
+      if (firstBox) {
+        bounds = this.surfaces[i].bounds;
+      } else {
+        tempBounds = bounds;
+        bounds = surroundingBox(this.surfaces[i].bounds, tempBounds);
+      }
+
+      firstBox = false;
+    }
+
+    // return our actual bounds
+    return bounds;
+  }
 }
 
 // sphere class
@@ -36,7 +81,7 @@ class Sphere extends Surface {
     super(origin);
     this.radius = radius;
     this.material = material;
-    this.bounding();
+    this.bounds = this.bounding();
   };
 
   // methods
@@ -83,6 +128,6 @@ class Sphere extends Surface {
 
   // calculate this object's AABB bounding box
   bounding() {
-    this.bounds = new AABB(this.origin + new Vector3(this.radius, this.radius, this.radius), this.origin - new Vector3(this.radius, this.radius, this.radius));
+    return new AABB(this.origin + new Vector3(this.radius, this.radius, this.radius), this.origin - new Vector3(this.radius, this.radius, this.radius));
   }
 }
