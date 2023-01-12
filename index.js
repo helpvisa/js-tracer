@@ -9,16 +9,16 @@ let oldSamples = 0;
 let tick = 0;
 // current sample (for accumulation multisampling) and set a max sample rate
 let sample = 0;
-let maxSamples = 200;
+let maxSamples = 5000;
 // set the depth of our samples (# of bounces)
-const depth = 12;
+const depth = 6;
 // set a size for our perlin grid and create it
 // const perlinSize = Math.max(width, height);
 // const perlin = new Perlin(perlinSize);
 
 // define our sky parameters (zero vectors are pitch black)
-let skyTop = new Vector3(100, 100, 100);
-let skyBottom = new Vector3(255, 164, 0);
+let skyTop = new Vector3(100, 100, 255);
+let skyBottom = new Vector3(50, 50, 100);
 
 // define our camera
 let camera = new Camera(new Vector3(0, 0, 0), new Vector3(0, 0, 1), 60, ratio);
@@ -30,14 +30,19 @@ const reflection1 = new Material(1, new Vector3(1, 1, 1));
 reflection1.roughness = 0.5;
 const reflection2 = new Material(1, new Vector3(1, 0.5, 0.5));
 reflection2.roughness = 0;
+const diffuse = new Material(0, new Vector3(0, 0.5, 0.5));
 
 // define our world
-const sphere1 = new Sphere(new Vector3(0, 0, -60), 18, reflection1);
-const sphere2 = new Sphere(new Vector3(-20.5, 13, -49), 8, reflection2);
+const sphere1 = new Sphere(new Vector3(0, 0, -60), 18, diffuse);
+const sphere2 = new Sphere(new Vector3(-10.5, 13, -49), 8, diffuse);
 const sphere3 = new Sphere(new Vector3(20, -20, -40), 12, light);
 const sphere4 = new Sphere(new Vector3(20, 13, -40), 8, new Material(0, new Vector3(0.01, 0.01, 1)));
 const sphere5 = new Sphere(new Vector3(-32, -4, -65), 10, new Material(0, new Vector3(1, 0.01, 1)));
-const world = [sphere1, sphere2, sphere3, sphere4, sphere5];
+const world = [];
+// randomly create spheres
+for (let i = 0; i < 30; i++) {
+  world.push(new Sphere(multiplyVector(randomVector(), 60), Math.random() * 20, new Material(Math.floor(Math.random() * 3), randomVector())));
+}
 const masterBVH = new BVH(world);
 const lights = [sphere3]; // for biased raytracing
 
@@ -103,7 +108,7 @@ function raytrace() {
       const ray = camera.castRay(u, v);
 
       // intersect this ray with the world
-      colour = intersectWorld(ray, [masterBVH], 0.001, Infinity, depth, lights, skyTop, skyBottom);
+      colour = intersectWorld(ray, world, 0.001, Infinity, depth, lights, skyTop, skyBottom);
 
       // paint this colour to the buffer at the appropriate index
       const index = getIndex(x, y, width);

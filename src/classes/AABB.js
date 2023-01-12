@@ -5,7 +5,7 @@ class AABB {
     this.min = min;
   }
 
-  hit(ray) {
+  hit(ray, t_min, t_max) {
     // calculate fractional ray direction
     let dirFrac = new Vector3(0,0,0);
     if (ray.direction.x === 0) {
@@ -32,8 +32,8 @@ class AABB {
     let t5 = (this.min.z - ray.origin.z) * dirFrac.z;
     let t6 = (this.max.z - ray.origin.z) * dirFrac.z;
 
-    const t_min = Math.max(Math.max(Math.min(t1,t2), Math.min(t3,t4)), Math.min(t5,t6));
-    const t_max = Math.min(Math.min(Math.max(t1,t2), Math.max(t3,t4)), Math.max(t5,t6));
+    t_min = Math.max(Math.max(Math.min(t1,t2), Math.min(t3,t4)), Math.min(t5,t6));
+    t_max = Math.min(Math.min(Math.max(t1,t2), Math.max(t3,t4)), Math.max(t5,t6));
 
     if (t_max < 0)
         return false;

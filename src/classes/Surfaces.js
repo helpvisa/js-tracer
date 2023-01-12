@@ -27,20 +27,38 @@ class BVH extends Surface {
     this.surfaces = surfaces; // store an array of our world list
     // calc our bounding box for this node
     this.bounds = this.bounding();
+    // create our hierarchical structure
+    this.createStructure();
   }
 
   hit(ray, t_min, t_max) {
-    if (this.bounds && this.bounds.hit(ray)) {
-      let finalObj = false;
-      for (let i = 0; i < this.surfaces.length; i++) {
-        const hit = this.surfaces[i].hit(ray, t_min, t_max);
-        if (hit) {
-          t_max = hit.t;
-          finalObj = hit;
-        }
-      }
-      return finalObj;
+    if (!this.bounds || !this.bounds.hit(ray)) {
+      return false;
     }
+
+    // define the final object found within our hierarchy
+    let finalObj;
+    // which sides of our node were it?
+    const leftHit = this.left.bounds.hit(ray, t_min, t_max);
+    const rightHit = this.right.bounds.hit(ray, t_min, t_max);
+    // check sub-nodes if they were hit
+    if (leftHit) {
+      const hit = this.left.hit(ray, t_min, t_max);
+      if (hit) {
+        t_max = hit.t;
+        finalObj = hit;
+      }
+    }
+    if (rightHit) {
+      const hit = this.right.hit(ray, t_min, t_max);
+      if (hit) {
+        t_max = hit.t;
+        finalObj = hit;
+      }
+    }
+
+    // return our finally found obj
+    return finalObj;
   }
 
   // determine the bounding box of the surfaces contained within its list
@@ -72,6 +90,43 @@ class BVH extends Surface {
 
     // return our actual bounds
     return bounds;
+  }
+
+  // create a sub-hierarchy of BVH nodes to split the world into parts and minimize complex calculations
+  createStructure() {
+    // determine how many surfaces there are within our node
+    if (this.surfaces.length === 1) {
+      this.right = this.surfaces[0];
+      this.left = this.right;
+      // mark that this node contains objects (it is an ending point), not lists
+      this.final = true;
+    } else if (this.surfaces.length === 2) {
+      this.right = this.surfaces[1];
+      this.left = this.surfaces[0];
+      // mark that this node contains objects (it is an ending point), not lists
+      this.final = true;
+    } else {
+      const leftSurfaces = [];
+      const rightSurfaces = [];
+
+      // find the middle point of our array
+      const mid = Math.floor(this.surfaces.length / 2);
+
+      // populate our left and right arrays
+      for (let l = 0; l < mid; l++) {
+        leftSurfaces.push(this.surfaces[l]);
+      }
+      for (let r = mid; r < this.surfaces.length; r++) {
+        rightSurfaces.push(this.surfaces[r]);
+      }
+
+      // create our BVH nodes and add them to this object
+      this.left = new BVH(leftSurfaces);
+      this.right = new BVH(rightSurfaces);
+
+      // recalculate bounds based off left / right BVH nodes
+      this.bounds = surroundingBox(this.left.bounds, this.right.bounds);
+    }
   }
 }
 
