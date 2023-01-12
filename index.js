@@ -1,8 +1,8 @@
 //== variable declaration ==//
 // define the width and height of our canvas, and determine its aspect ratio
 // 1920x1080 is not a sane value; most likely the canvas should be scaled/stretched to fit the screen after it has finished rendering
-let width = 320;
-let height = 240;
+let width = 1600;
+let height = 900;
 let ratio = width / height;
 // tick tracking (for animation, updating on-page values)
 let oldSamples = 0;
@@ -12,39 +12,43 @@ let sample = 0;
 let maxSamples = 5000;
 // set the depth of our samples (# of bounces)
 const depth = 6;
-// set a size for our perlin grid and create it
-// const perlinSize = Math.max(width, height);
-// const perlin = new Perlin(perlinSize);
+// define a global variable for whether we want to use BVH or not (defaults to false)
+let useBVH = false;
 
 // define our sky parameters (zero vectors are pitch black)
-let skyTop = new Vector3(100, 100, 255);
-let skyBottom = new Vector3(50, 50, 100);
+let skyTop = new Vector3(0, 0, 0);
+let skyBottom = new Vector3(50, 50, 125);
 
 // define our camera
 let camera = new Camera(new Vector3(0, 0, 0), new Vector3(0, 0, 1), 60, ratio);
 
 // define our materials
 // define our lights
-const light = new Material(2, new Vector3(0.68, 6, 0.90));
+const light1 = new Material(2, new Vector3(6, 0.68, 0.90));
+const light2 = new Material(2, new Vector3(0.5, 6, 0.5));
 const reflection1 = new Material(1, new Vector3(1, 1, 1));
 reflection1.roughness = 0.5;
-const reflection2 = new Material(1, new Vector3(1, 0.5, 0.5));
+const reflection2 = new Material(1, new Vector3(1, 0.05, 0.05));
 reflection2.roughness = 0;
-const diffuse = new Material(0, new Vector3(0, 0.5, 0.5));
+const diffuse1 = new Material(0, new Vector3(1, 1, 1));
+const diffuse2 = new Material(0, new Vector3(0.025, 0.025, 1));
+const diffuse3 = new Material(0, new Vector3(0.5, 1, 0.5));
 
 // define our world
-const sphere1 = new Sphere(new Vector3(0, 0, -60), 18, diffuse);
-const sphere2 = new Sphere(new Vector3(-10.5, 13, -49), 8, diffuse);
-const sphere3 = new Sphere(new Vector3(20, -20, -40), 12, light);
-const sphere4 = new Sphere(new Vector3(20, 13, -40), 8, new Material(0, new Vector3(0.01, 0.01, 1)));
-const sphere5 = new Sphere(new Vector3(-32, -4, -65), 10, new Material(0, new Vector3(1, 0.01, 1)));
-const world = [];
-// randomly create spheres
-for (let i = 0; i < 30; i++) {
-  world.push(new Sphere(multiplyVector(randomVector(), 60), Math.random() * 20, new Material(Math.floor(Math.random() * 3), randomVector())));
-}
+const sphere1 = new Sphere(new Vector3(0, 0, -60), 18, diffuse1);
+const sphere2 = new Sphere(new Vector3(-20.5, 13, -49), 8, reflection2);
+const sphere3 = new Sphere(new Vector3(20, -20, -40), 10, light1);
+const sphere4 = new Sphere(new Vector3(20, 13, -40), 8, diffuse2);
+const sphere5 = new Sphere(new Vector3(-24, -20, -60), 10, light2);
+const sphere6 = new Sphere(new Vector3(0, 320, -60), 300, diffuse3);
+
+const world = [sphere1, sphere2, sphere3, sphere4, sphere5, sphere6];
+
+// create a master BVH container
 const masterBVH = new BVH(world);
-const lights = [sphere3]; // for biased raytracing
+
+// create our lights array for sphere which emit light
+const lights = [sphere3, sphere5]; // for biased raytracing
 
 
 //== define and manage page elements ==//
@@ -82,6 +86,7 @@ function main() {
   // recursively call self
   requestAnimationFrame(main);
 }
+
 requestAnimationFrame(main);
 // check how many samples are being rendered per second
 setInterval(samplesPerSecondCalc, 1000);
@@ -108,7 +113,13 @@ function raytrace() {
       const ray = camera.castRay(u, v);
 
       // intersect this ray with the world
-      colour = intersectWorld(ray, world, 0.001, Infinity, depth, lights, skyTop, skyBottom);
+      // if we are using a BVH, do so here
+      if (useBVH) {
+        colour = intersectWorld(ray, [masterBVH], 0.001, Infinity, depth, lights, skyTop, skyBottom);
+      } else {
+        // otherwise just render using the whole world array
+        colour = intersectWorld(ray, world, 0.001, Infinity, depth, lights, skyTop, skyBottom);
+      }
 
       // paint this colour to the buffer at the appropriate index
       const index = getIndex(x, y, width);

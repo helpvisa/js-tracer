@@ -32,31 +32,25 @@ class BVH extends Surface {
   }
 
   hit(ray, t_min, t_max) {
-    if (!this.bounds || !this.bounds.hit(ray)) {
+    if (!this.bounds.hit(ray)) {
       return false;
     }
 
-    // define the final object found within our hierarchy
+    // check sub-nodes
     let finalObj;
-    // which sides of our node were it?
-    const leftHit = this.left.bounds.hit(ray, t_min, t_max);
-    const rightHit = this.right.bounds.hit(ray, t_min, t_max);
-    // check sub-nodes if they were hit
-    if (leftHit) {
+    if (!this.leaf) {
       const hit = this.left.hit(ray, t_min, t_max);
       if (hit) {
         t_max = hit.t;
         finalObj = hit;
       }
     }
-    if (rightHit) {
-      const hit = this.right.hit(ray, t_min, t_max);
-      if (hit) {
-        t_max = hit.t;
-        finalObj = hit;
-      }
+    const hit = this.right.hit(ray, t_min, t_max);
+    if (hit) {
+      t_max = hit.t;
+      finalObj = hit;
     }
-
+  
     // return our finally found obj
     return finalObj;
   }
@@ -97,17 +91,45 @@ class BVH extends Surface {
     // determine how many surfaces there are within our node
     if (this.surfaces.length === 1) {
       this.right = this.surfaces[0];
-      this.left = this.right;
-      // mark that this node contains objects (it is an ending point), not lists
-      this.final = true;
+      // mark that this node is an ending point
+      this.leaf = true;
     } else if (this.surfaces.length === 2) {
       this.right = this.surfaces[1];
       this.left = this.surfaces[0];
-      // mark that this node contains objects (it is an ending point), not lists
-      this.final = true;
     } else {
       const leftSurfaces = [];
       const rightSurfaces = [];
+
+      // sort our surfaces based on a random axis
+      let axis = Math.floor(Math.random() * 2);
+      this.surfaces.sort(function(a, b) {
+        switch (axis) {
+          case 0:
+            if (a.origin.x < b.origin.x) {
+              return -1;
+            }
+            if (a.origin.x > b.origin.x) {
+              return  1;
+            }
+            return 0;
+          case 1:
+            if (a.origin.y < b.origin.y) {
+              return -1;
+            }
+            if (a.origin.y > b.origin.y) {
+              return  1;
+            }
+            return 0;
+          case 2:
+            if (a.origin.z < b.origin.z) {
+              return -1;
+            }
+            if (a.origin.z > b.origin.z) {
+              return  1;
+            }
+            return 0;
+        }
+      });
 
       // find the middle point of our array
       const mid = Math.floor(this.surfaces.length / 2);
@@ -183,6 +205,6 @@ class Sphere extends Surface {
 
   // calculate this object's AABB bounding box
   bounding() {
-    return new AABB(this.origin + new Vector3(this.radius, this.radius, this.radius), this.origin - new Vector3(this.radius, this.radius, this.radius));
+    return new AABB(addVectors(this.origin, new Vector3(this.radius, this.radius, this.radius)), subtractVectors(this.origin, new Vector3(this.radius, this.radius, this.radius)));
   }
 }
