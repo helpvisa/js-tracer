@@ -202,7 +202,8 @@ class Sphere extends Surface {
       point: point,
       normal: frontFace.normal,
       frontFace: frontFace.front,
-      material: this.material
+      material: this.material,
+      obj: this
     }
     return hitObj;
   }
@@ -257,7 +258,8 @@ class Rectangle extends Surface {
       point: ray.getPos(t),
       normal: frontFace.normal,
       frontFace: frontFace.front,
-      material: this.material
+      material: this.material,
+      obj: this
     }
     return hitObj;
   }

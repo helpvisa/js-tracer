@@ -9,7 +9,7 @@ let oldSamples = 0;
 let tick = 0;
 // current sample (for accumulation multisampling) and set a max sample rate
 let sample = 0;
-let maxSamples = 1000;
+let maxSamples = 10000;
 // set the depth of our samples (# of bounces)
 const depth = 4;
 // define a global variable for whether we want to use BVH or not (defaults to false)
@@ -32,7 +32,7 @@ const light3 = new Material(2, new Vector3(0.5, 0.5, 1));
 light3.brightness = 2;
 
 const reflection1 = new Material(1, new Vector3(1, 1, 1));
-reflection1.roughness = 0.2;
+reflection1.roughness = 0.5;
 const reflection2 = new Material(1, new Vector3(1, 0.05, 0.05));
 reflection2.roughness = 0;
 
@@ -56,9 +56,8 @@ const sphere6 = new Sphere(new Vector3(0, 320, -60), 300, diffuse3);
 const sphere7 = new Sphere(new Vector3(-18, 13, -70), 2, light3);
 const rect1 = new Rectangle(-80, 80, -1000, -100, -150, light3);
 const rect2 = new Rectangle(-800, 800, -600, 600, -84, reflection1);
-const rect3 = new Rectangle(-800, 800, -600, 600, 1, reflection1);
 
-const world = [sphere1, sphere2, sphere3, sphere4, sphere5, sphere6, sphere7, rect2];
+const world = [sphere3, sphere5, sphere6, sphere7, rect2];
 // for (let i = 0; i < 200; i++) {
 //   world.push(new Sphere(new Vector3(Math.random() * 600 - 300, Math.random() * 300 - 150, -200), Math.random() * 20, polished1));
 // }

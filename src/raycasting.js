@@ -100,16 +100,21 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
       switch (finalObj.material.type) {
         // if it is diffuse
         case 0:
-          // perform a light pass if lights exist and the material is illuminated by them
-          if (lights) {
-            lightColour = calculateLight(lights, finalObj);
-          }
           // set a new target for the recursively cast ray based on the material we are hitting
           target = addVectors(finalObj.point, finalObj.normal);
           target = addVectors(target, unitSphereVector);
           recursiveRay = new Ray(finalObj.point, subtractVectors(target, finalObj.point));
-          // cast our recursive ray with the colour mixed in
-          return clampVector(addVectors(lightColour, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom), 0.5)), 0, 4880);
+
+          // perform a light pass if lights exist and the material is illuminated by them
+          if (lights.length > 0) {
+            lightColour = calculateLight(lights, finalObj);
+            // cast our recursive ray with the light colour added in
+            return /*clampVector(*/addVectors(lightColour, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom), 0.5))/*, 0, 4880);*/
+          } else {
+            // simply multiply returned light from recursive raycast by our material colour
+            return /*clampVector(*/mixColours(finalObj.material.colour, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom), 0.5))/*, 0, 4880);*/
+          }
+          
         // if it is purely reflective
         case 1:
           // skip our light pass, since this is pure reflection
@@ -156,11 +161,6 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
           return mixColours(finalObj.material.colour, intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom));
         // if it is a polished material (diffuse with clear coat)
         case 4:
-          // perform a light pass if lights exist and the material is illuminated by them
-          if (lights) {
-            lightColour = calculateLight(lights, finalObj);
-          }
-          
           // apply roughness scale to normal
           surfaceNormal = finalObj.normal;
           // add randomness to normal if the surface has a rough characteristic
@@ -179,10 +179,18 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
             reflectionColour = intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom);
           }
 
+          // set our diffuse target
           target = addVectors(finalObj.point, finalObj.normal);
           target = addVectors(target, unitSphereVector);
           recursiveRay = new Ray(finalObj.point, subtractVectors(target, finalObj.point));
-          return clampVector(addVectors(reflectionColour, addVectors(lightColour, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom), 0.5))), 0, 4880);
+
+          // perform a light pass if lights exist and the material is illuminated by them
+          if (lights.length > 0) {
+            lightColour = calculateLight(lights, finalObj);
+            return /*clampVector(*/addVectors(reflectionColour, addVectors(lightColour, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom), 0.5)))/*, 0, 4880);*/
+          } else {
+            return /*clampVector(*/addVectors(reflectionColour, mixColours(finalObj.material.colour, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom), 0.5)))/*, 0, 4880);*/
+          }
       }
     }
   }
@@ -210,7 +218,7 @@ function calculateLight(lights, obj) {
     const dot = dotVectors(rayDir, obj.normal);
     if (dot >= 0) {
       const recursiveRay = new Ray(obj.point, rayDir);
-      lightColour = addVectors(lightColour, multiplyVector(intersectLight(recursiveRay, world, 0.001, Infinity), 255));
+      lightColour = addVectors(lightColour, multiplyVector(intersectLight(recursiveRay, world, 0.001, Infinity, lights[i]), 255));
     }
   }
   lightColour = mixColours(obj.material.colour, lightColour);
@@ -218,7 +226,7 @@ function calculateLight(lights, obj) {
 }
 
 // used to cast only to rays
-function intersectLight(ray, world, t_min, t_max) {
+function intersectLight(ray, world, t_min, t_max, targetLight) {
   let closestSoFar = t_max;
   let finalObj;
 
@@ -234,7 +242,7 @@ function intersectLight(ray, world, t_min, t_max) {
 
     if (finalObj) {
       // is this obj a light?
-      if (finalObj.material.type === 2) {
+      if (finalObj.obj === targetLight) {
         return multiplyVector(multiplyVector(finalObj.material.colour, finalObj.material.brightness), (1 / (distanceBetween(finalObj.point, ray.origin) / 10)));
       }
     }
