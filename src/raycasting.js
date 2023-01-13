@@ -86,9 +86,8 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
 
     // if we have a hit registered, recursively cast more rays into the scene
     if (finalObj) {
-      let target;
+      let target = new Vector3(0, 0, 0);
       let unitSphereVector = randomUnitSphereVector();
-      unitSphereVector = normalizeVector(unitSphereVector);
       let recursiveRay;
       let lightColour = new Vector3(0, 0, 0);
       let reflectionColour = new Vector3(0, 0, 0);
@@ -101,20 +100,20 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
         // if it is diffuse
         case 0:
           // set a new target for the recursively cast ray based on the material we are hitting
-          target = addVectors(finalObj.point, finalObj.normal);
+          target = subtractVectors(finalObj.point, addVectors(finalObj.point, finalObj.normal));
           target = addVectors(target, unitSphereVector);
-          recursiveRay = new Ray(finalObj.point, subtractVectors(target, finalObj.point));
 
           // perform a light pass if lights exist and the material is illuminated by them
           if (lights.length > 0) {
-            lightColour = calculateLight(lights, finalObj);
-            // cast our recursive ray with the light colour added in
-            return /*clampVector(*/addVectors(lightColour, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom), 0.5))/*, 0, 4880);*/
-          } else {
-            // simply multiply returned light from recursive raycast by our material colour
-            return /*clampVector(*/mixColours(finalObj.material.colour, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom), 0.5))/*, 0, 4880);*/
+            for (let i = 0; i < lights.length; i++) {
+              target = addVectors(target, subtractVectors(lights[i].pdf(), finalObj.point));
+            }
+            target = divideVector(target, lights.length + 1);
           }
-          
+
+          // create our recursive ray now after pdf creation
+          recursiveRay = new Ray(finalObj.point, target);
+          return /*clampVector(*/mixColours(finalObj.material.colour, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom), 0.5))/*, 0, 4880);*/
         // if it is purely reflective
         case 1:
           // skip our light pass, since this is pure reflection
@@ -165,7 +164,7 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
           surfaceNormal = finalObj.normal;
           // add randomness to normal if the surface has a rough characteristic
           if (finalObj.material.roughness > 0) {
-            surfaceNormal = addVectors(finalObj.normal, multiplyVector(randomVector(), finalObj.material.roughness * finalObj.material.roughness));
+            surfaceNormal = addVectors(finalObj.normal, multiplyVector(unitSphereVector, finalObj.material.roughness * finalObj.material.roughness));
           }
 
           // determine if our material's polish will reflect at this point
@@ -210,14 +209,15 @@ function calculateLight(lights, obj) {
   lightColour = new Vector3(0, 0, 0);
   // iterate through light sources
   for (let i = 0; i < numLights; i++) {
-    let target = lights[i].origin;
-    target = addVectors(target, multiplyVector(normalizedRandomVector(), lights[i].radius));
+    target = lights[i].pdf();
     const rayDir = normalizeVector(subtractVectors(target, obj.point));
 
     // get the dot of normal - light; only cast ray if it can actually hit light
     const dot = dotVectors(rayDir, obj.normal);
     if (dot > 0.000001) {
-      attenuation = 1 / distanceSquared(target, obj.point);
+      let attenuation = 0;
+      let distSqr = distanceSquared(target, obj.point);
+      attenuation = 1 / distSqr;
       const recursiveRay = new Ray(obj.point, rayDir);
       lightColour = addVectors(lightColour, multiplyVector(intersectLight(recursiveRay, world, 0.001, Infinity, lights[i]), 255 * attenuation));
     }

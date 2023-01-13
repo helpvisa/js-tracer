@@ -18,6 +18,11 @@ class Surface {
   bounding() {
     return false; // will always return false (no bounds) for a blank surface
   }
+
+  // calculate the area that this object occupies for use in a pdf
+  pdf() {
+    return false; // dummy class
+  }
 }
 
 // BVH class that wraps our world list in an AABB bounding box container hierarchically
@@ -211,6 +216,11 @@ class Sphere extends Surface {
   // calculate this object's AABB bounding box
   bounding() {
     return new AABB(addVectors(this.origin, new Vector3(this.radius, this.radius, this.radius)), subtractVectors(this.origin, new Vector3(this.radius, this.radius, this.radius)));
+  }
+
+  // calculate pdf
+  pdf() {
+    return addVectors(this.origin, multiplyVector(normalizedRandomVector(), this.radius));
   }
 }
 

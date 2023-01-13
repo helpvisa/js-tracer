@@ -9,7 +9,7 @@ let oldSamples = 0;
 let tick = 0;
 // current sample (for accumulation multisampling) and set a max sample rate
 let sample = 0;
-let maxSamples = 120;
+let maxSamples = 1000;
 // set the depth of our samples (# of bounces)
 const depth = 4;
 // define a global variable for whether we want to use BVH or not (defaults to false)
@@ -20,16 +20,16 @@ let skyTop = new Vector3(50, 50, 150);
 let skyBottom = new Vector3(100, 100, 250);
 
 // define our camera
-let camera = new Camera(new Vector3(-80, 0, -30), new Vector3(0, -2, -79), new Vector3(0, 1, 0), 40, ratio);
+let camera = new Camera(new Vector3(0, -400, 100), new Vector3(0, -2, -79), new Vector3(0, 1, 0), 60, ratio);
 
 // define our materials
 // define our lights
 const light1 = new Material(2, new Vector3(1, 0.5, 0.5));
-light1.brightness = 1000;
+light1.brightness = 2000;
 const light2 = new Material(2, new Vector3(0.5, 1, 0.5));
-light2.brightness = 1000;
+light2.brightness = 255;
 const light3 = new Material(2, new Vector3(0.5, 0.5, 2));
-light3.brightness = 60000;
+light3.brightness = 2000;
 
 const reflection1 = new Material(1, new Vector3(1, 1, 1));
 reflection1.roughness = 0.15;
@@ -44,20 +44,20 @@ const diffuse2 = new Material(0, new Vector3(0.025, 0.025, 1));
 const diffuse3 = new Material(0, new Vector3(0.5, 1, 0.5));
 
 const polished1 = new Material(4, new Vector3(0.25, 1, 0.65));
-polished1.roughness = 0.3;
+polished1.roughness = 0;
 
 // define our world
-const sphere1 = new Sphere(new Vector3(0, 0, -60), 18, polished1);
+const sphere1 = new Sphere(new Vector3(0, 0, -60), 18, diffuse1);
 const sphere2 = new Sphere(new Vector3(20.5, 13, -49), 8, reflection2);
 const sphere3 = new Sphere(new Vector3(-22, -19, -40), 14, light1);
 const sphere4 = new Sphere(new Vector3(-28, 8, -55), 9, refractive1);
 const sphere5 = new Sphere(new Vector3(24, -19, -60), 10, light2);
 const sphere6 = new Sphere(new Vector3(0, 320, -60), 300, diffuse3);
-const sphere7 = new Sphere(new Vector3(-110, -35, 40), 16, light3);
+const sphere7 = new Sphere(new Vector3(0, 10, -60), 2, light3);
 const rect1 = new Rectangle(-80, 80, -1000, -100, -150, light3);
 const rect2 = new Rectangle(-800, 800, -600, 600, -84, reflection2);
 
-const world = [sphere3, sphere4, sphere5, sphere6, rect2];
+const world = [sphere1, sphere5, sphere6, rect2];
 // for (let i = 0; i < 200; i++) {
 //   world.push(new Sphere(new Vector3(Math.random() * 600 - 300, Math.random() * 300 - 150, -200), Math.random() * 20, polished1));
 // }
@@ -66,7 +66,7 @@ const world = [sphere3, sphere4, sphere5, sphere6, rect2];
 const masterBVH = new BVH(world);
 
 // create our lights array for sphere which emit light
-const lights = [sphere3, sphere5]; // for biased raytracing
+const lights = [sphere5]; // for biased raytracing
 
 
 //== define and manage page elements ==//
