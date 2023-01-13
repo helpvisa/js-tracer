@@ -8,6 +8,6 @@ body {
 
 canvas {
   display: flex;
-  width: 72vh;
-  max-width: 90vw;
+  height: 70vh;
+  max-width: 92vw;
 }

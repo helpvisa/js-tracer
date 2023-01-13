@@ -135,7 +135,18 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
           if (finalObj.material.roughness > 0) {
             surfaceNormal = addVectors(finalObj.normal, multiplyVector(randomVector(), finalObj.material.roughness * finalObj.material.roughness));
           }
-          target = refract(ray.direction, surfaceNormal, ratio);
+
+          // determine if our material will actually refract
+          const cos_theta = Math.min(dotVectors(multiplyVector(ray.direction, -1), surfaceNormal), 1);
+          const sin_theta = Math.sqrt(1 - cos_theta * cos_theta);
+          const cannotRefract = ratio * sin_theta > 1;
+
+          // the dotVectors + math.random component simulates fresnel
+          if (cannotRefract || reflectance(cos_theta, ratio) > -dotVectors(ray.direction, surfaceNormal) - Math.random()) {
+            target = reflectVector(ray.direction, surfaceNormal);
+          } else {
+            target = refract(cos_theta, ray.direction, surfaceNormal, ratio);
+          }
           recursiveRay = new Ray(finalObj.point, target);
 
           // cast our ray
@@ -201,10 +212,16 @@ function intersectLight(ray, world, t_min, t_max) {
 }
 
 // used to refract a ray
-function refract(dir, normal, ratio) {
+function refract(cos_theta, dir, normal, ratio) {
   dir = normalizeVector(dir);
-  const cos_theta = Math.min(dotVectors(multiplyVector(dir, -1), normal), 1);
   const perpendicular = multiplyVector(addVectors(dir, multiplyVector(normal, cos_theta)), ratio);
   const parallel = multiplyVector(normal, -Math.sqrt(Math.abs(1 - magnitudeSquared(perpendicular))));
   return addVectors(perpendicular, parallel);
+}
+
+// calculate reflectance based on normal (schlick approximation)
+function reflectance(cos_theta, ior = 1.52) {
+  let r = (1 - ior) / (1 + ior);
+  r *= r; // square r
+  return r + (1 - r) * Math.pow((1 - cos_theta), 5);
 }

@@ -16,7 +16,7 @@ const depth = 6;
 let useBVH = false;
 
 // define our sky parameters (zero vectors are pitch black)
-let skyTop = new Vector3(0, 0, 0);
+let skyTop = new Vector3(10, 10, 50);
 let skyBottom = new Vector3(50, 50, 125);
 
 // define our camera
@@ -28,7 +28,7 @@ const light1 = new Material(2, new Vector3(6, 0.68, 0.90));
 const light2 = new Material(2, new Vector3(0.5, 6, 0.5));
 
 const reflection1 = new Material(1, new Vector3(1, 1, 1));
-reflection1.roughness = 0.5;
+reflection1.roughness = 0;
 const reflection2 = new Material(1, new Vector3(1, 0.05, 0.05));
 reflection2.roughness = 0;
 
@@ -43,7 +43,7 @@ const diffuse3 = new Material(0, new Vector3(0.5, 1, 0.5));
 const sphere1 = new Sphere(new Vector3(0, 0, -60), 18, diffuse1);
 const sphere2 = new Sphere(new Vector3(-20.5, 13, -49), 8, reflection2);
 const sphere3 = new Sphere(new Vector3(20, -20, -40), 10, light1);
-const sphere4 = new Sphere(new Vector3(28, 8, -55), 8, refractive1);
+const sphere4 = new Sphere(new Vector3(28, 8, -55), 9, refractive1);
 const sphere5 = new Sphere(new Vector3(-24, -20, -60), 10, light2);
 const sphere6 = new Sphere(new Vector3(0, 320, -60), 300, diffuse3);
 
