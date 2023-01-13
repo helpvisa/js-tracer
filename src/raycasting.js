@@ -91,7 +91,10 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
       unitSphereVector = normalizeVector(unitSphereVector);
       let recursiveRay;
       let lightColour = new Vector3(0, 0, 0);
+      let reflectionColour = new Vector3(0, 0, 0);
       let surfaceNormal;
+      let cos_theta;
+      let sin_theta;
 
       // switch statement which determines how to mix the final colours
       switch (finalObj.material.type) {
@@ -106,7 +109,7 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
           target = addVectors(target, unitSphereVector);
           recursiveRay = new Ray(finalObj.point, subtractVectors(target, finalObj.point));
           // cast our recursive ray with the colour mixed in
-          return clampVector(addVectors(lightColour, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom), 0.5)), 0, 255);
+          return clampVector(addVectors(lightColour, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom), 0.5)), 0, 4880);
         // if it is purely reflective
         case 1:
           // skip our light pass, since this is pure reflection
@@ -121,7 +124,7 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
           recursiveRay = new Ray(finalObj.point, target);
           // cast our recursive ray
           // we do not multiply the returned ray by 0.5, since it is 'pure reflection' and thus loses no energy
-          return clampVector(mixColours(finalObj.material.colour, intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom)), 0, 255);
+          return mixColours(finalObj.material.colour, intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom));
         // if it is a light source
         case 2:
           return multiplyVector(finalObj.material.colour, 255);
@@ -137,8 +140,8 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
           }
 
           // determine if our material will actually refract
-          const cos_theta = Math.min(dotVectors(multiplyVector(ray.direction, -1), surfaceNormal), 1);
-          const sin_theta = Math.sqrt(1 - cos_theta * cos_theta);
+          cos_theta = Math.min(dotVectors(multiplyVector(ray.direction, -1), surfaceNormal), 1);
+          sin_theta = Math.sqrt(1 - cos_theta * cos_theta);
           const cannotRefract = ratio * sin_theta > 1;
 
           // the dotVectors + math.random component simulates fresnel
@@ -150,7 +153,36 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
           recursiveRay = new Ray(finalObj.point, target);
 
           // cast our ray
-          return clampVector(mixColours(finalObj.material.colour, intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom)), 0, 255);
+          return mixColours(finalObj.material.colour, intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom));
+        // if it is a polished material (diffuse with clear coat)
+        case 4:
+          // perform a light pass if lights exist and the material is illuminated by them
+          if (lights) {
+            lightColour = calculateLight(lights, finalObj);
+          }
+          
+          // apply roughness scale to normal
+          surfaceNormal = finalObj.normal;
+          // add randomness to normal if the surface has a rough characteristic
+          if (finalObj.material.roughness > 0) {
+            surfaceNormal = addVectors(finalObj.normal, multiplyVector(randomVector(), finalObj.material.roughness * finalObj.material.roughness));
+          }
+
+          // determine if our material's polish will reflect at this point
+          cos_theta = Math.min(dotVectors(multiplyVector(ray.direction, -1), surfaceNormal), 1);
+
+          // set a new target for the recursively cast ray (reflection or diffuse)
+          // add reflection + diffuse
+          if (reflectance(cos_theta) > -dotVectors(ray.direction, surfaceNormal) - Math.random()) {
+            target = reflectVector(ray.direction, surfaceNormal);
+            recursiveRay = new Ray(finalObj.point, target);
+            reflectionColour = intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom);
+          }
+
+          target = addVectors(finalObj.point, finalObj.normal);
+          target = addVectors(target, unitSphereVector);
+          recursiveRay = new Ray(finalObj.point, subtractVectors(target, finalObj.point));
+          return clampVector(addVectors(reflectionColour, addVectors(lightColour, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom), 0.5))), 0, 4880);
       }
     }
   }
@@ -181,7 +213,7 @@ function calculateLight(lights, obj) {
       lightColour = addVectors(lightColour, multiplyVector(intersectLight(recursiveRay, world, 0.001, Infinity), 255));
     }
   }
-  lightColour = clampVector(mixColours(obj.material.colour, lightColour), 0, 255);
+  lightColour = mixColours(obj.material.colour, lightColour);
   return lightColour;
 }
 
@@ -203,7 +235,7 @@ function intersectLight(ray, world, t_min, t_max) {
     if (finalObj) {
       // is this obj a light?
       if (finalObj.material.type === 2) {
-        return finalObj.material.colour;
+        return multiplyVector(multiplyVector(finalObj.material.colour, finalObj.material.brightness), (1 / distanceSquared(finalObj.point, ray.origin)));
       }
     }
   }
