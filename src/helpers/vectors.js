@@ -98,6 +98,15 @@ function distanceSquared(vec1, vec2) {
   return dx * dx + dy * dy + dz * dz;
 }
 
+// find the squared magnitude of the vectors
+function magnitudeSquared(vec) {
+  const xsqr = vec.x * vec.x;
+  const ysqr = vec.y * vec.y;
+  const zsqr = vec.z * vec.z;
+
+  return xsqr + ysqr + zsqr;
+}
+
 // reflect a vector along another vector (the normal)
 function reflectVector(vec, normal) {
   let returnVector = new Vector3(0, 0, 0);
@@ -113,12 +122,18 @@ function setFaceNormal(ray, normal) {
     let frontFace = dotVectors(ray.direction, normal) < 0;
 
     if (frontFace) {
-      return normal;
+      return {
+        normal: normal,
+        front: true
+      };
     } else {
       normal.x *= -1;
       normal.y *= -1;
       normal.z *= -1;
-      return normal;
+      return {
+        normal: normal,
+        front: false
+      };
     }
 }
 

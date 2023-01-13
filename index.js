@@ -1,8 +1,8 @@
 //== variable declaration ==//
 // define the width and height of our canvas, and determine its aspect ratio
 // 1920x1080 is not a sane value; most likely the canvas should be scaled/stretched to fit the screen after it has finished rendering
-let width = 1600;
-let height = 900;
+let width = 320;
+let height = 240;
 let ratio = width / height;
 // tick tracking (for animation, updating on-page values)
 let oldSamples = 0;
@@ -26,10 +26,15 @@ let camera = new Camera(new Vector3(0, 0, 0), new Vector3(0, 0, 1), 60, ratio);
 // define our lights
 const light1 = new Material(2, new Vector3(6, 0.68, 0.90));
 const light2 = new Material(2, new Vector3(0.5, 6, 0.5));
+
 const reflection1 = new Material(1, new Vector3(1, 1, 1));
 reflection1.roughness = 0.5;
 const reflection2 = new Material(1, new Vector3(1, 0.05, 0.05));
 reflection2.roughness = 0;
+
+const refractive1 = new Material(3, new Vector3(1, 1, 1));
+refractive1.roughness = 0;
+
 const diffuse1 = new Material(0, new Vector3(1, 1, 1));
 const diffuse2 = new Material(0, new Vector3(0.025, 0.025, 1));
 const diffuse3 = new Material(0, new Vector3(0.5, 1, 0.5));
@@ -38,7 +43,7 @@ const diffuse3 = new Material(0, new Vector3(0.5, 1, 0.5));
 const sphere1 = new Sphere(new Vector3(0, 0, -60), 18, diffuse1);
 const sphere2 = new Sphere(new Vector3(-20.5, 13, -49), 8, reflection2);
 const sphere3 = new Sphere(new Vector3(20, -20, -40), 10, light1);
-const sphere4 = new Sphere(new Vector3(20, 13, -40), 8, diffuse2);
+const sphere4 = new Sphere(new Vector3(28, 8, -55), 8, refractive1);
 const sphere5 = new Sphere(new Vector3(-24, -20, -60), 10, light2);
 const sphere6 = new Sphere(new Vector3(0, 320, -60), 300, diffuse3);
 

@@ -19,7 +19,7 @@ function intersectWorldNormals(ray, world, t_min, t_max) {
 
     return finalObj ? multiplyVector(finalObj.normal, 255) : multiplyVector(ray.direction, 255);
   }
-  
+
   // return the ray direction if nothing is in the world
   return multiplyVector(ray.direction, 255);
 }
@@ -90,51 +90,33 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
       let unitSphereVector = randomUnitSphereVector();
       unitSphereVector = normalizeVector(unitSphereVector);
       let recursiveRay;
+      let lightColour = new Vector3(0, 0, 0);
+      let surfaceNormal;
 
       // switch statement which determines how to mix the final colours
       switch (finalObj.material.type) {
         // if it is diffuse
         case 0:
           // perform a light pass if lights exist and the material is illuminated by them
-          // this should be branched into its own function
-          let lightColour = new Vector3(0, 0, 0);
           if (lights) {
-            let numLights = lights.length;
-            lightColour = new Vector3(0, 0, 0);
-            // iterate through light sources
-            for (let i = 0; i < numLights; i++) {
-              let target = lights[i].origin;
-              target = addVectors(target, multiplyVector(normalizedRandomVector(), lights[i].radius));
-              const rayDir = subtractVectors(target, finalObj.point);
-
-              // get the dot of normal - light; only cast ray if it can actually hit light
-              const dot = dotVectors(rayDir, finalObj.normal);
-              if (dot >= 0) {
-                const recursiveRay = new Ray(finalObj.point, rayDir);
-                lightColour = addVectors(lightColour, multiplyVector(intersectLight(recursiveRay, world, 0.001, Infinity), 255));
-              }
-            }
-            lightColour = clampVector(mixColours(finalObj.material.colour, lightColour), 0, 255);
+            lightColour = calculateLight(lights, finalObj);
           }
-
           // set a new target for the recursively cast ray based on the material we are hitting
           target = addVectors(finalObj.point, finalObj.normal);
           target = addVectors(target, unitSphereVector);
           recursiveRay = new Ray(finalObj.point, subtractVectors(target, finalObj.point));
-
           // cast our recursive ray with the colour mixed in
           return clampVector(addVectors(lightColour, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom), 0.5)), 0, 255);
         // if it is purely reflective
         case 1:
           // skip our light pass, since this is pure reflection
-
           // set a new target based on a reflected vector
-          let surfaceNormal = finalObj.normal;
+          surfaceNormal = finalObj.normal;
           // add randomness if the surface has a rough characteristic
           if (finalObj.material.roughness > 0) {
             surfaceNormal = addVectors(finalObj.normal, multiplyVector(randomVector(), finalObj.material.roughness * finalObj.material.roughness));
           }
-
+          // reflect along surface normal
           target = reflectVector(ray.direction, surfaceNormal);
           recursiveRay = new Ray(finalObj.point, target);
           // cast our recursive ray
@@ -142,13 +124,22 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
           return clampVector(mixColours(finalObj.material.colour, intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom)), 0, 255);
         // if it is a light source
         case 2:
-          // set a new target for the recursively cast ray based on the material we are hitting
-          target = addVectors(finalObj.point, finalObj.normal);
-          target = addVectors(target, unitSphereVector);
-          recursiveRay = new Ray(finalObj.point, subtractVectors(target, finalObj.point));
+          return multiplyVector(finalObj.material.colour, 255);
+        // if it is refractive
+        case 3:
+          // our refraction ratio (should be inverted if hits a back face realistically)
+          const ratio = finalObj.frontFace ? 1 / finalObj.material.ior : finalObj.material.ior;
+          // get our refracted vector and create our ray
+          surfaceNormal = finalObj.normal;
+          // add randomness to normal if the surface has a rough characteristic
+          if (finalObj.material.roughness > 0) {
+            surfaceNormal = addVectors(finalObj.normal, multiplyVector(randomVector(), finalObj.material.roughness * finalObj.material.roughness));
+          }
+          target = refract(ray.direction, surfaceNormal, ratio);
+          recursiveRay = new Ray(finalObj.point, target);
 
           // cast our ray
-          return multiplyVector(finalObj.material.colour, 255);
+          return clampVector(mixColours(finalObj.material.colour, intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom)), 0, 255);
       }
     }
   }
@@ -157,6 +148,30 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
   const dir = normalizeVector(ray.direction);
   const t = dir.y;
   return addVectors(multiplyVector(skyBottom, t), multiplyVector(skyTop, (1 - t)));
+}
+
+// used inside a material when it responds to light
+function calculateLight(lights, obj) {
+  // perform a light pass if lights exist and the material is illuminated by them
+  // this should be branched into its own function
+  let lightColour = new Vector3(0, 0, 0);
+  let numLights = lights.length;
+  lightColour = new Vector3(0, 0, 0);
+  // iterate through light sources
+  for (let i = 0; i < numLights; i++) {
+    let target = lights[i].origin;
+    target = addVectors(target, multiplyVector(normalizedRandomVector(), lights[i].radius));
+    const rayDir = subtractVectors(target, obj.point);
+
+    // get the dot of normal - light; only cast ray if it can actually hit light
+    const dot = dotVectors(rayDir, obj.normal);
+    if (dot >= 0) {
+      const recursiveRay = new Ray(obj.point, rayDir);
+      lightColour = addVectors(lightColour, multiplyVector(intersectLight(recursiveRay, world, 0.001, Infinity), 255));
+    }
+  }
+  lightColour = clampVector(mixColours(obj.material.colour, lightColour), 0, 255);
+  return lightColour;
 }
 
 // used to cast only to rays
@@ -183,4 +198,13 @@ function intersectLight(ray, world, t_min, t_max) {
   }
   // return the void
   return new Vector3(0, 0, 0);
+}
+
+// used to refract a ray
+function refract(dir, normal, ratio) {
+  dir = normalizeVector(dir);
+  const cos_theta = Math.min(dotVectors(multiplyVector(dir, -1), normal), 1);
+  const perpendicular = multiplyVector(addVectors(dir, multiplyVector(normal, cos_theta)), ratio);
+  const parallel = multiplyVector(normal, -Math.sqrt(Math.abs(1 - magnitudeSquared(perpendicular))));
+  return addVectors(perpendicular, parallel);
 }
