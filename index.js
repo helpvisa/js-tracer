@@ -9,9 +9,9 @@ let oldSamples = 0;
 let tick = 0;
 // current sample (for accumulation multisampling) and set a max sample rate
 let sample = 0;
-let maxSamples = 5000;
+let maxSamples = 1000;
 // set the depth of our samples (# of bounces)
-const depth = 12;
+const depth = 4;
 // define a global variable for whether we want to use BVH or not (defaults to false)
 let useBVH = false;
 
