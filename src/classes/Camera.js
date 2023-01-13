@@ -2,9 +2,9 @@
 // depends on Vector3 class and math helpers, so must be loaded by the html after these
 class Camera {
   // ratio is the aspect ratio (ex. 16/9, 4/3), default is square ratio
-  constructor(origin = new Vector3(0, 0, 0), direction = new Vector3(0, 0, 1), fov = 60, ratio = 1) {
+  constructor(origin = new Vector3(0, 0, 0), target = new Vector3(0, 0, 1), up = new Vector3(0, 1, 0), fov = 60, ratio = 1) {
     this.origin = origin;
-    this.direction = direction;
+    this.target = target;
     this.fov = fov;
     this.ratio = ratio;
 
@@ -15,8 +15,8 @@ class Camera {
     this.viewportHeight = 2 * h;
     this.viewportWidth = this.viewportHeight * ratio;
 
-    let w = normalizeVector(subtractVectors(this.origin, this.direction));
-    let u = normalizeVector(crossVectors(new Vector3(0, 1, 0), w));
+    let w = normalizeVector(subtractVectors(this.origin, this.target));
+    let u = normalizeVector(crossVectors(up, w));
     let v = crossVectors(w, u);
 
     // the vector defining the horizontal axis of the viewplane
@@ -26,9 +26,8 @@ class Camera {
     // find the upper left corner of our viewplane, split process into steps
     const halfHorizontal = divideVector(this.horizontal, 2);
     const halfVertical = divideVector(this.vertical, 2);
-    const addVert = addVectors(this.origin, halfVertical);
-    const addHor = addVectors(addVert, halfHorizontal);
-    const subDir = subtractVectors(addHor, w);
+    const center = addVectors(halfHorizontal, halfVertical);
+    const subDir = addVectors(center, w);
     this.upperLeftCorner = subtractVectors(this.origin, subDir);
   };
 

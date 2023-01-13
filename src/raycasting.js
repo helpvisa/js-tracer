@@ -127,7 +127,7 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
           return mixColours(finalObj.material.colour, intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom));
         // if it is a light source
         case 2:
-          return multiplyVector(finalObj.material.colour, 255);
+          return multiplyVector(finalObj.material.colour, 255 * finalObj.material.brightness);
         // if it is refractive
         case 3:
           // our refraction ratio (should be inverted if hits a back face realistically)
@@ -235,7 +235,7 @@ function intersectLight(ray, world, t_min, t_max) {
     if (finalObj) {
       // is this obj a light?
       if (finalObj.material.type === 2) {
-        return multiplyVector(multiplyVector(finalObj.material.colour, finalObj.material.brightness), (1 / distanceSquared(finalObj.point, ray.origin)));
+        return multiplyVector(multiplyVector(finalObj.material.colour, finalObj.material.brightness), (1 / (distanceBetween(finalObj.point, ray.origin) / 10)));
       }
     }
   }

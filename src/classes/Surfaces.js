@@ -38,17 +38,17 @@ class BVH extends Surface {
 
     // check sub-nodes
     let finalObj;
-    if (!this.leaf) {
-      const hit = this.left.hit(ray, t_min, t_max);
-      if (hit) {
-        t_max = hit.t;
-        finalObj = hit;
-      }
+    const hitLeft = this.left.hit(ray, t_min, t_max);
+    if (hitLeft) {
+      t_max = hitLeft.t;
+      finalObj = hitLeft;
     }
-    const hit = this.right.hit(ray, t_min, t_max);
-    if (hit) {
-      t_max = hit.t;
-      finalObj = hit;
+    if (!this.leaf) {
+      const hitRight = this.right.hit(ray, t_min, t_max);
+      if (hitRight) {
+        t_max = hitRight.t;
+        finalObj = hitRight;
+      }
     }
   
     // return our finally found obj
@@ -90,12 +90,12 @@ class BVH extends Surface {
   createStructure() {
     // determine how many surfaces there are within our node
     if (this.surfaces.length === 1) {
-      this.right = this.surfaces[0];
+      this.left = this.surfaces[0];
       // mark that this node is an ending point
       this.leaf = true;
     } else if (this.surfaces.length === 2) {
-      this.right = this.surfaces[1];
       this.left = this.surfaces[0];
+      this.right = this.surfaces[1];
     } else {
       const leftSurfaces = [];
       const rightSurfaces = [];
@@ -112,6 +112,7 @@ class BVH extends Surface {
               return  1;
             }
             return 0;
+            break;
           case 1:
             if (a.origin.y < b.origin.y) {
               return -1;
@@ -120,6 +121,7 @@ class BVH extends Surface {
               return  1;
             }
             return 0;
+            break;
           case 2:
             if (a.origin.z < b.origin.z) {
               return -1;
@@ -128,6 +130,7 @@ class BVH extends Surface {
               return  1;
             }
             return 0;
+            break;
         }
       });
 
@@ -194,7 +197,7 @@ class Sphere extends Surface {
     let frontFace = setFaceNormal(ray, normal); // invert this normal if it is facing inward (we hit the inside of the sphere)
 
     // create a record of the information from this hit and return it as an object
-    let hitObj = {
+    const hitObj = {
       t: t,
       point: point,
       normal: frontFace.normal,
@@ -207,5 +210,61 @@ class Sphere extends Surface {
   // calculate this object's AABB bounding box
   bounding() {
     return new AABB(addVectors(this.origin, new Vector3(this.radius, this.radius, this.radius)), subtractVectors(this.origin, new Vector3(this.radius, this.radius, this.radius)));
+  }
+}
+
+// axis-aligned rectangle surface
+class Rectangle extends Surface {
+  constructor(x0, x1, y0, y1, z, material) {
+    let center = new Vector3(0, 0, z);
+    center.x = x0 - x1;
+    center.y = y0 - y1;
+
+    // call our super where the origin is our new-found center
+    super(center);
+    // assign our class-specific variables
+    this.x0 = x0;
+    this.x1 = x1;
+    this.y0 = y0;
+    this.y1 = y1;
+    this.z = z;
+    this.material = material;
+
+    // calculate our bounding box
+    this.bounds = this.bounding();
+  }
+
+  hit(ray, t_min, t_max) {
+    const t = (this.z - ray.origin.z) / ray.direction.z;
+    if (t < t_min || t > t_max) {
+      return false;
+    }
+
+    const x = ray.origin.x + t * ray.direction.x;
+    const y = ray.origin.y + t * ray.direction.y;
+    if (x < this.x0 || x > this.x1 || y < this.y0 || y > this.y1) {
+      return false;
+    }
+
+    const u = (x - this.x0) / (this.x1 - this.x0);
+    const v = (y - this.y0) / (this.y1 - this.y0);
+
+    const normal = new Vector3(0, 0, 1); // always faces toward Z since it is axis-aligned
+    const frontFace = setFaceNormal(ray, normal);
+    
+    const hitObj = {
+      t: t,
+      point: ray.getPos(t),
+      normal: frontFace.normal,
+      frontFace: frontFace.front,
+      material: this.material
+    }
+    return hitObj;
+  }
+
+  bounding() {
+    // bounding box must have non-zero width in all dimensions
+    // therefore we must pad the z value by a small amount
+    return new AABB(new Vector3(this.x1, this.y1, this.z - 0.001), new Vector3(this.x0, this.y0, this.z + 0.001));
   }
 }

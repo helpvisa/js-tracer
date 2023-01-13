@@ -7,22 +7,18 @@ class AABB {
 
   hit(ray) {
     // determine if our ray is within these bounds
-    let t1 = (this.min.x - ray.origin.x) * ray.dirFrac.x;
-    let t2 = (this.max.x - ray.origin.x) * ray.dirFrac.x;
-    let t3 = (this.min.y - ray.origin.y) * ray.dirFrac.y;
-    let t4 = (this.max.y - ray.origin.y) * ray.dirFrac.y;
-    let t5 = (this.min.z - ray.origin.z) * ray.dirFrac.z;
-    let t6 = (this.max.z - ray.origin.z) * ray.dirFrac.z;
+    let tx1 = (this.min.x - ray.origin.x) * ray.dirFrac.x;
+    let tx2 = (this.max.x - ray.origin.x) * ray.dirFrac.x;
 
-    const t_min = Math.max(Math.max(Math.min(t1,t2), Math.min(t3,t4)), Math.min(t5,t6));
-    const t_max = Math.min(Math.min(Math.max(t1,t2), Math.max(t3,t4)), Math.max(t5,t6));
+    let t_min = Math.min(tx1, tx2);
+    let t_max = Math.max(tx1, tx2);
 
-    if (t_max < 0)
-        return false;
+    let ty1 = (this.min.y - ray.origin.y) * ray.dirFrac.y;
+    let ty2 = (this.max.y - ray.origin.y) * ray.dirFrac.y;
 
-    if (t_min > t_max)
-        return false;
-    
-    return true;
+    t_min = Math.max(t_min, Math.min(ty1, ty2));
+    t_max = Math.min(t_max, Math.max(ty1, ty2));
+
+    return t_max >= 0 && t_max >= t_min;
   }
 }
