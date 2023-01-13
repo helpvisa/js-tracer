@@ -12,7 +12,7 @@ class Material {
         this.roughness = 0; // a value that determines the roughness of the surface reflection
         break;
       case 2:
-        this.brightness = 1; // multiplier for overall brightness
+        this.brightness = 500; // multiplier for overall brightness
       case 3:
         this.roughness = 0; // a value that determines the roughness of the surface refraction
         this.ior = 1.52; // a value that determines the index of refraction

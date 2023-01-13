@@ -132,7 +132,7 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
           return mixColours(finalObj.material.colour, intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom));
         // if it is a light source
         case 2:
-          return multiplyVector(finalObj.material.colour, 255 * finalObj.material.brightness);
+          return multiplyVector(finalObj.material.colour, finalObj.material.brightness);
         // if it is refractive
         case 3:
           // our refraction ratio (should be inverted if hits a back face realistically)
@@ -212,13 +212,14 @@ function calculateLight(lights, obj) {
   for (let i = 0; i < numLights; i++) {
     let target = lights[i].origin;
     target = addVectors(target, multiplyVector(normalizedRandomVector(), lights[i].radius));
-    const rayDir = subtractVectors(target, obj.point);
+    const rayDir = normalizeVector(subtractVectors(target, obj.point));
 
     // get the dot of normal - light; only cast ray if it can actually hit light
     const dot = dotVectors(rayDir, obj.normal);
-    if (dot >= 0) {
+    if (dot > 0.000001) {
+      attenuation = 1 / distanceSquared(target, obj.point);
       const recursiveRay = new Ray(obj.point, rayDir);
-      lightColour = addVectors(lightColour, multiplyVector(intersectLight(recursiveRay, world, 0.001, Infinity, lights[i]), 255));
+      lightColour = addVectors(lightColour, multiplyVector(intersectLight(recursiveRay, world, 0.001, Infinity, lights[i]), 255 * attenuation));
     }
   }
   lightColour = mixColours(obj.material.colour, lightColour);
@@ -243,7 +244,7 @@ function intersectLight(ray, world, t_min, t_max, targetLight) {
     if (finalObj) {
       // is this obj a light?
       if (finalObj.obj === targetLight) {
-        return multiplyVector(multiplyVector(finalObj.material.colour, finalObj.material.brightness), (1 / (distanceBetween(finalObj.point, ray.origin) / 10)));
+        return multiplyVector(finalObj.material.colour, finalObj.material.brightness);
       }
     }
   }
