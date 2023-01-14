@@ -95,31 +95,32 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
       let cos_theta;
       let sin_theta;
 
+      // set variables here for importance sampling to be used in switch
+      let area;
+      let pdf = 1;
+      let dist = 1;
+
       // switch statement which determines how to mix the final colours
       switch (finalObj.material.type) {
         // if it is diffuse
         case 0:
-          let numLights = 0;
-          let area;
-          let pdf = 1;
-          let dist = 1;
           // set a new target for the recursively cast ray based on the material we are hitting
           target = subtractVectors(finalObj.point, addVectors(finalObj.point, addVectors(finalObj.normal, unitSphereVector)));
 
-          // perform a light pass if lights exist and the material is illuminated by them
+          // perform a light importance check if lights exist and the material is illuminated by them
           if (lights.length > 0) {
             for (let i = 0; i < lights.length; i++) {
-              area = lights[i].area();
-              dist = distanceSquared(area, finalObj.point);
-              let lightVec = subtractVectors(area, finalObj.point);
-              let dot = dotVectors(lightVec, finalObj.normal);
-              if (dot > 0) {
-                target = addVectors(target, lightVec);
-                numLights += 1;
-                pdf = dist / (dot * lights[i].radius);
+              if (Math.random() > 0.5) {
+                area = lights[i].area();
+                dist = distanceSquared(area, finalObj.point);
+                let lightVec = subtractVectors(area, finalObj.point);
+                let dot = dotVectors(lightVec, finalObj.normal);
+                if (dot > 0) {
+                  target = lightVec;
+                  pdf = dist / (dot * lights[i].radius);
+                }
               }
             }
-            target = divideVector(target, numLights + 1);
           }
 
           // create our recursive ray now after pdf creation
@@ -189,18 +190,27 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
             reflectionColour = intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom);
           }
 
-          // set our diffuse target
-          target = addVectors(finalObj.point, finalObj.normal);
-          target = addVectors(target, unitSphereVector);
-          recursiveRay = new Ray(finalObj.point, subtractVectors(target, finalObj.point));
-
-          // perform a light pass if lights exist and the material is illuminated by them
+          // set a new target for the recursively cast ray based on the material we are hitting
+          target = subtractVectors(finalObj.point, addVectors(finalObj.point, addVectors(finalObj.normal, unitSphereVector)));
+          
+          // perform a light importance check if lights exist and the material is illuminated by them
           if (lights.length > 0) {
-            lightColour = calculateLight(lights, finalObj);
-            return /*clampVector(*/addVectors(reflectionColour, addVectors(lightColour, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom), 0.5)))/*, 0, 4880);*/
-          } else {
-            return /*clampVector(*/addVectors(reflectionColour, mixColours(finalObj.material.colour, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom), 0.5)))/*, 0, 4880);*/
+            for (let i = 0; i < lights.length; i++) {
+              if (Math.random() > 0.5) {
+                area = lights[i].area();
+                dist = distanceSquared(area, finalObj.point);
+                let lightVec = subtractVectors(area, finalObj.point);
+                let dot = dotVectors(lightVec, finalObj.normal);
+                if (dot > 0) {
+                  target = lightVec;
+                  pdf = dist / (dot * lights[i].radius);
+                }
+              }
+            }
           }
+          // create our recursive ray now after pdf creation
+          recursiveRay = new Ray(finalObj.point, target);
+          return /*clampVector(*/divideVector(addVectors(reflectionColour, mixColours(finalObj.material.colour, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom), 0.5))), pdf)/*, 0, 4880);*/
       }
     }
   }
