@@ -20,7 +20,7 @@ class Surface {
   }
 
   // calculate the area that this object occupies for use in a pdf
-  pdf() {
+  area() {
     return false; // dummy class
   }
 }
@@ -218,8 +218,8 @@ class Sphere extends Surface {
     return new AABB(addVectors(this.origin, new Vector3(this.radius, this.radius, this.radius)), subtractVectors(this.origin, new Vector3(this.radius, this.radius, this.radius)));
   }
 
-  // calculate pdf
-  pdf() {
+  // calculate area
+  area() {
     return addVectors(this.origin, multiplyVector(normalizedRandomVector(), this.radius));
   }
 }

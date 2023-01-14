@@ -99,21 +99,32 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
       switch (finalObj.material.type) {
         // if it is diffuse
         case 0:
+          let numLights = 0;
+          let area;
+          let pdf = 1;
+          let dist = 1;
           // set a new target for the recursively cast ray based on the material we are hitting
-          target = subtractVectors(finalObj.point, addVectors(finalObj.point, finalObj.normal));
-          target = addVectors(target, unitSphereVector);
+          target = subtractVectors(finalObj.point, addVectors(finalObj.point, addVectors(finalObj.normal, unitSphereVector)));
 
           // perform a light pass if lights exist and the material is illuminated by them
           if (lights.length > 0) {
             for (let i = 0; i < lights.length; i++) {
-              target = addVectors(target, subtractVectors(lights[i].pdf(), finalObj.point));
+              area = lights[i].area();
+              dist = distanceSquared(area, finalObj.point);
+              let lightVec = subtractVectors(area, finalObj.point);
+              let dot = dotVectors(lightVec, finalObj.normal);
+              if (dot > 0) {
+                target = addVectors(target, lightVec);
+                numLights += 1;
+                pdf = dist / (dot * lights[i].radius);
+              }
             }
-            target = divideVector(target, lights.length + 1);
+            target = divideVector(target, numLights + 1);
           }
 
           // create our recursive ray now after pdf creation
           recursiveRay = new Ray(finalObj.point, target);
-          return /*clampVector(*/mixColours(finalObj.material.colour, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom), 0.5))/*, 0, 4880);*/
+          return /*clampVector(*/divideVector(mixColours(finalObj.material.colour, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom), 0.5)), pdf)/*, 0, 4880);*/
         // if it is purely reflective
         case 1:
           // skip our light pass, since this is pure reflection
@@ -209,7 +220,7 @@ function calculateLight(lights, obj) {
   lightColour = new Vector3(0, 0, 0);
   // iterate through light sources
   for (let i = 0; i < numLights; i++) {
-    target = lights[i].pdf();
+    target = lights[i].area();
     const rayDir = normalizeVector(subtractVectors(target, obj.point));
 
     // get the dot of normal - light; only cast ray if it can actually hit light
