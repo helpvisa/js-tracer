@@ -125,7 +125,7 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
 
           // create our recursive ray now after pdf creation
           recursiveRay = new Ray(finalObj.point, target);
-          return /*clampVector(*/divideVector(mixColours(finalObj.material.colour, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom), 0.5)), pdf)/*, 0, 4880);*/
+          return clampVector(divideVector(mixColours(finalObj.material.colour, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom), 0.5)), pdf), 0, 4880);
         // if it is purely reflective
         case 1:
           // skip our light pass, since this is pure reflection
@@ -210,7 +210,7 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
           }
           // create our recursive ray now after pdf creation
           recursiveRay = new Ray(finalObj.point, target);
-          return /*clampVector(*/divideVector(addVectors(reflectionColour, mixColours(finalObj.material.colour, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom), 0.5))), pdf)/*, 0, 4880);*/
+          return clampVector(divideVector(addVectors(reflectionColour, mixColours(finalObj.material.colour, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom), 0.5))), pdf), 0, 4880);
       }
     }
   }
@@ -219,58 +219,6 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
   const dir = normalizeVector(ray.direction);
   const t = dir.y;
   return addVectors(multiplyVector(skyBottom, t), multiplyVector(skyTop, (1 - t)));
-}
-
-// used inside a material when it responds to light
-function calculateLight(lights, obj) {
-  // perform a light pass if lights exist and the material is illuminated by them
-  // this should be branched into its own function
-  let lightColour = new Vector3(0, 0, 0);
-  let numLights = lights.length;
-  lightColour = new Vector3(0, 0, 0);
-  // iterate through light sources
-  for (let i = 0; i < numLights; i++) {
-    target = lights[i].area();
-    const rayDir = normalizeVector(subtractVectors(target, obj.point));
-
-    // get the dot of normal - light; only cast ray if it can actually hit light
-    const dot = dotVectors(rayDir, obj.normal);
-    if (dot > 0.000001) {
-      let attenuation = 0;
-      let distSqr = distanceSquared(target, obj.point);
-      attenuation = 1 / distSqr;
-      const recursiveRay = new Ray(obj.point, rayDir);
-      lightColour = addVectors(lightColour, multiplyVector(intersectLight(recursiveRay, world, 0.001, Infinity, lights[i]), 255 * attenuation));
-    }
-  }
-  lightColour = mixColours(obj.material.colour, lightColour);
-  return lightColour;
-}
-
-// used to cast only to rays
-function intersectLight(ray, world, t_min, t_max, targetLight) {
-  let closestSoFar = t_max;
-  let finalObj;
-
-  if (world.length > 0) {
-    for (let i = 0; i < world.length; i++) {
-      const hit = world[i].hit(ray, t_min, t_max);
-      if (hit) {
-        closestSoFar = hit.t;
-        t_max = closestSoFar;
-        finalObj = hit;
-      }
-    }
-
-    if (finalObj) {
-      // is this obj a light?
-      if (finalObj.obj === targetLight) {
-        return multiplyVector(finalObj.material.colour, finalObj.material.brightness);
-      }
-    }
-  }
-  // return the void
-  return new Vector3(0, 0, 0);
 }
 
 // used to refract a ray

@@ -1,8 +1,8 @@
 //== variable declaration ==//
 // define the width and height of our canvas, and determine its aspect ratio
 // 1920x1080 is not a sane value; most likely the canvas should be scaled/stretched to fit the screen after it has finished rendering
-let width = 320;
-let height = 240;
+let width = 1280;
+let height = 720;
 let ratio = width / height;
 // tick tracking (for animation, updating on-page values)
 let oldSamples = 0;
@@ -37,14 +37,14 @@ const reflection2 = new Material(1, new Vector3(1, 0.035, 0.8));
 reflection2.roughness = 0;
 
 const refractive1 = new Material(3, new Vector3(1, 1, 1));
-refractive1.roughness = 0;
+refractive1.roughness = 0.5;
 
 const diffuse1 = new Material(0, new Vector3(1, 1, 1));
 const diffuse2 = new Material(0, new Vector3(0.025, 0.025, 1));
 const diffuse3 = new Material(0, new Vector3(0.5, 1, 0.5));
 
 const polished1 = new Material(4, new Vector3(0.25, 1, 0.65));
-polished1.roughness = 0;
+polished1.roughness = 0.5;
 
 // define our world
 const sphere1 = new Sphere(new Vector3(0, 0, -60), 18, polished1);
