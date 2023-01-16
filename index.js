@@ -15,10 +15,6 @@ const depth = 4;
 // define a global variable for whether we want to use BVH or not (defaults to false)
 let useBVH = false;
 
-// create a perlin obj for random generation
-const perlinSize = 4;
-let perlin = new Perlin(perlinSize);
-
 // define our sky parameters (zero vectors are pitch black)
 let skyTop = new Vector3(50, 50, 150);
 let skyBottom = new Vector3(100, 100, 250);
@@ -102,8 +98,9 @@ function main() {
   samplesEl.textContent = "Samples so far: " + sample;
   depthEl.textContent = "Current ray depth: " + depth;
   if (sample < maxSamples) {
-    // raytrace();
-    fillBufferPerlin();
+    perlin.seed();
+    raytrace();
+    // fillBufferPerlin();
   }
 
   // recursively call self
@@ -128,9 +125,10 @@ function raytrace() {
       // create vectors which store the unbiased traces and the biased traces, and the final colour
       let colour = new Vector3(0, 0, 0);
       // randomize UVs here (for multisampling 'antialiasing')
-      let rand = Math.random() - 0.5;
-      const u = (x + rand) / width;
-      const v = (y + rand) / height;
+      let randx = perlin.get(x / width * (perlinSize - 1), y / height * (perlinSize - 1)) * 2 - 1;
+      let randy = perlin.get(y / height * (perlinSize - 1), x / width * (perlinSize - 1)) * 2 - 1;
+      const u = (x + randx) / width;
+      const v = (y + randy) / height;
 
       // cast our ray and store it
       const ray = camera.castRay(u, v);
