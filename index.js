@@ -1,8 +1,8 @@
 //== variable declaration ==//
 // define the width and height of our canvas, and determine its aspect ratio
 // 1920x1080 is not a sane value; most likely the canvas should be scaled/stretched to fit the screen after it has finished rendering
-let width = 1280;
-let height = 720;
+let width = 320;
+let height = 180;
 let ratio = width / height;
 // tick tracking (for animation, updating on-page values)
 let oldSamples = 0;
@@ -15,12 +15,16 @@ const depth = 4;
 // define a global variable for whether we want to use BVH or not (defaults to false)
 let useBVH = false;
 
+// create a perlin obj for random generation
+const perlinSize = 4;
+let perlin = new Perlin(perlinSize);
+
 // define our sky parameters (zero vectors are pitch black)
 let skyTop = new Vector3(50, 50, 150);
 let skyBottom = new Vector3(100, 100, 250);
 
 // define our camera
-let camera = new Camera(new Vector3(40, 0, -10), new Vector3(3, 0, -60), new Vector3(0, 1, 0), 50, ratio);
+let camera = new Camera(new Vector3(0, 0, -10), new Vector3(3, 0, -60), new Vector3(0, 1, 0), 50, ratio);
 
 // define our materials
 // define our lights
@@ -34,17 +38,17 @@ light3.brightness = 10000;
 const reflection1 = new Material(1, new Vector3(1, 1, 1));
 reflection1.roughness = 0.2;
 const reflection2 = new Material(1, new Vector3(1, 0.035, 0.8));
-reflection2.roughness = 0;
+reflection2.roughness = 0.6;
 
 const refractive1 = new Material(3, new Vector3(1, 1, 1));
-refractive1.roughness = 0.5;
+refractive1.roughness = 0;
 
 const diffuse1 = new Material(0, new Vector3(1, 1, 1));
 const diffuse2 = new Material(0, new Vector3(0.025, 0.025, 1));
 const diffuse3 = new Material(0, new Vector3(0.5, 1, 0.5));
 
 const polished1 = new Material(4, new Vector3(0.25, 1, 0.65));
-polished1.roughness = 0.5;
+polished1.roughness = 0.35;
 
 // define our world
 const sphere1 = new Sphere(new Vector3(0, 0, -60), 18, polished1);
@@ -98,7 +102,8 @@ function main() {
   samplesEl.textContent = "Samples so far: " + sample;
   depthEl.textContent = "Current ray depth: " + depth;
   if (sample < maxSamples) {
-    raytrace();
+    // raytrace();
+    fillBufferPerlin();
   }
 
   // recursively call self
@@ -185,7 +190,7 @@ function fillBufferPerlin() {
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const index = getIndex(x, y, width);
-      let value = perlin.get(x / width * (perlinSize - 1), y / height * (perlinSize - 1));
+      let value = perlin.get(x / width * (perlinSize - 1), y / height * (perlinSize - 1)) * 255;
       data[index] = value; // red
       data[index + 1] = value; // green
       data[index + 2] = value; // blue

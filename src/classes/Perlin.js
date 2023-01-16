@@ -42,17 +42,22 @@ class Perlin {
     let bottomLeft = this.dotGrid(x, y, x0, y1);
     let topRight = this.dotGrid(x, y, x1, y0);
     let bottomRight = this.dotGrid(x, y, x1, y1);
+
+    // fade our x and y values for smoother interpolation
+    y = y1 - y;
+    x = x1 - x;
+    y = this.fade(y);
+    x = this.fade(x);
   
     // linearly interpolate this value to get the intensity
-    let v1 = this.interpolate(y, topLeft, bottomLeft);
-    let v2 = this.interpolate(y, topRight, bottomRight);
-    let v3 = this.interpolate(x, v1, v2);
+    let v1 = this.interpolate(y, bottomLeft, topLeft);
+    let v2 = this.interpolate(y, bottomRight, topRight);
+    let v3 = this.interpolate(x, v2, v1);
 
     // clamp between 0 and 1
     let intensity = (v3 + 1) / 2;
 
     // return our interpolated intensity
-    return ((this.grid[x0][y0].x + 1) / 2 + (this.grid[x0][y0].y + 1) / 2) / 2;
     return intensity;
   }
 
@@ -73,5 +78,9 @@ class Perlin {
   // linear interpolator
   interpolate(val, a, b) {
     return a + val * (b - a);
+  }
+
+  fade(val) {
+    return ((6 * val - 15) * val + 10) * val * val * val;
   }
 }

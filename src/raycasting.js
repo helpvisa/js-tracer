@@ -161,7 +161,7 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
           const cannotRefract = ratio * sin_theta > 1;
 
           // the dotVectors + math.random component simulates fresnel
-          if (cannotRefract || reflectance(cos_theta, ratio) > -dotVectors(ray.direction, surfaceNormal) - Math.random()) {
+          if (cannotRefract || reflectance(cos_theta, ratio) > Math.random()) {
             target = reflectVector(ray.direction, surfaceNormal);
           } else {
             target = refract(cos_theta, ray.direction, surfaceNormal, ratio);
@@ -184,7 +184,7 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
 
           // set a new target for the recursively cast ray (reflection or diffuse)
           // add reflection + diffuse
-          if (reflectance(cos_theta) > -dotVectors(ray.direction, surfaceNormal) - Math.random()) {
+          if (reflectance(cos_theta) > Math.random()) {
             target = reflectVector(ray.direction, surfaceNormal);
             recursiveRay = new Ray(finalObj.point, target);
             reflectionColour = intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom);
