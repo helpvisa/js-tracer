@@ -204,9 +204,9 @@ class Sphere extends Surface {
     // calculate our texture coordinates in terms of u, v if we have a texture
     let u = 0;
     let v = 0;
-    if (this.material.useTex) {
+    if (this.material.perlin || this.material.diffuseTex || this.material.roughnessTex || this.material.normalTex) {
       const pi = Math.PI;
-      const theta = Math.cos(-normal.y);
+      const theta = Math.acos(-normal.y);
       const phi = Math.atan2(-normal.z, normal.x) + pi;
       u = phi / (2 * pi);
       v = theta / pi;

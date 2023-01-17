@@ -1,6 +1,6 @@
 // defines functions which intersect a given ray with the world and get it to return a colour value
 // intersect with the world and return colours based on the surface's material (full raytracing stack)
-function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBottom) {
+function intersectWorld(ray, world, t_min, t_max, depth, lights, skyCol, useSkybox) {
   if (depth < 1) {
     return new Vector3(0, 0, 0);
   }
@@ -23,16 +23,43 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
       let recursiveRay;
       let lightColour = new Vector3(0, 0, 0);
       let reflectionColour = new Vector3(0, 0, 0);
-      let surfaceNormal;
       let cos_theta;
       let sin_theta;
 
       // texture colour var
       let texCol = finalObj.material.colour;
-      if (finalObj.material.useTex) {
-        let size = finalObj.material.textureSize;
-        let noise = finalObj.material.texture.get(finalObj.u * size, finalObj.v * size);
-        texCol = multiplyVector(finalObj.material.colour, noise);
+      let roughness = finalObj.material.roughness;
+      let normal = finalObj.normal;
+      // calc texture values
+      // first check if perlin is used
+      if (finalObj.material.perlin) {
+        // check for diffuse
+        if (finalObj.material.diffuseTex) {
+          const diffSize = finalObj.material.diffSize;
+          const diffNoise = finalObj.material.diffuseTex.get(finalObj.u * diffSize, finalObj.v * diffSize);
+          texCol = multiplyVector(finalObj.material.colour, diffNoise);
+        }
+        // check for roughness map
+        if (finalObj.material.roughnessTex) {
+          const roughSize = finalObj.material.roughSize;
+          const roughNoise = finalObj.material.roughnessTex.get(finalObj.u * roughSize, finalObj.v * roughSize);
+          roughness = roughness * roughNoise;
+        }
+        // check for normal map
+        if (finalObj.material.normalTex) {
+          const normSize = finalObj.material.roughSize;
+          const normXNoise = finalObj.material.normalTex.x.get(finalObj.u * normSize, finalObj.v * normSize);
+          const normYNoise = finalObj.material.normalTex.y.get(finalObj.u * normSize, finalObj.v * normSize);
+          normal.x += (normXNoise * 2 - 1) * finalObj.material.normalMult;
+          normal.y += (normYNoise * 2 - 1) * finalObj.material.normalMult;
+        }
+      } else { // otherwise sample the associated image texture
+        if (finalObj.material.diffuseTex) {
+          const texData = finalObj.material.diffuseTex.getPixel(finalObj.u, finalObj.v);
+          texCol.x = texData.r;
+          texCol.y = texData.g;
+          texCol.z = texData.b;
+        }
       }
 
       // set variables here for importance sampling to be used in switch
@@ -45,7 +72,7 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
         // if it is diffuse
         case 0:
           // set a new target for the recursively cast ray based on the material we are hitting
-          target = subtractVectors(finalObj.point, subtractVectors(finalObj.point, addVectors(finalObj.normal, unitSphereVector)));
+          target = subtractVectors(finalObj.point, subtractVectors(finalObj.point, addVectors(normal, unitSphereVector)));
 
           // perform a light importance check if lights exist and the material is illuminated by them
           if (lights.length > 0) {
@@ -54,7 +81,7 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
                 area = lights[i].area();
                 dist = distanceSquared(area, finalObj.point);
                 let lightVec = subtractVectors(area, finalObj.point);
-                let dot = dotVectors(lightVec, finalObj.normal);
+                let dot = dotVectors(lightVec, normal);
                 if (dot > 0) {
                   target = lightVec;
                   pdf = dist / (dot * lights[i].radius);
@@ -65,22 +92,21 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
 
           // create our recursive ray now after pdf creation
           recursiveRay = new Ray(finalObj.point, target);
-          return clampVector(divideVector(mixColours(texCol, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom), 0.5)), pdf), 0, 4880);
+          return clampVector(divideVector(mixColours(texCol, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyCol, useSkybox), 0.5)), pdf), 0, 4880);
         // if it is purely reflective
         case 1:
           // skip our light pass, since this is pure reflection
           // set a new target based on a reflected vector
-          surfaceNormal = finalObj.normal;
           // add randomness if the surface has a rough characteristic
-          if (finalObj.material.roughness > 0) {
-            surfaceNormal = addVectors(finalObj.normal, multiplyVector(unitSphereVector, finalObj.material.roughness * finalObj.material.roughness));
+          if (roughness > 0) {
+            normal = addVectors(normal, multiplyVector(unitSphereVector, roughness * roughness));
           }
           // reflect along surface normal
-          target = reflectVector(ray.direction, surfaceNormal);
+          target = reflectVector(ray.direction, normal);
           recursiveRay = new Ray(finalObj.point, target);
           // cast our recursive ray
           // we do not multiply the returned ray by 0.5, since it is 'pure reflection' and thus loses no energy
-          return mixColours(texCol, intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom));
+          return mixColours(texCol, intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyCol, useSkybox));
         // if it is a light source
         case 2:
           return multiplyVector(texCol, finalObj.material.brightness);
@@ -89,49 +115,47 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
           // our refraction ratio (should be inverted if hits a back face realistically)
           const ratio = finalObj.frontFace ? 1 / finalObj.material.ior : finalObj.material.ior;
           // get our refracted vector and create our ray
-          surfaceNormal = finalObj.normal;
           // add randomness to normal if the surface has a rough characteristic
-          if (finalObj.material.roughness > 0) {
-            surfaceNormal = addVectors(finalObj.normal, multiplyVector(unitSphereVector, finalObj.material.roughness * finalObj.material.roughness));
+          if (roughness > 0) {
+            normal = addVectors(normal, multiplyVector(unitSphereVector, roughness * roughness));
           }
 
           // determine if our material will actually refract
-          cos_theta = Math.min(dotVectors(multiplyVector(ray.direction, -1), surfaceNormal), 1);
+          cos_theta = Math.min(dotVectors(multiplyVector(ray.direction, -1), normal), 1);
           sin_theta = Math.sqrt(1 - cos_theta * cos_theta);
           const cannotRefract = ratio * sin_theta > 1;
 
           // the dotVectors + math.random component simulates fresnel
           if (cannotRefract || reflectance(cos_theta, ratio) > rng()) {
-            target = reflectVector(ray.direction, surfaceNormal);
+            target = reflectVector(ray.direction, normal);
           } else {
-            target = refract(cos_theta, ray.direction, surfaceNormal, ratio);
+            target = refract(cos_theta, ray.direction, normal, ratio);
           }
           recursiveRay = new Ray(finalObj.point, target);
 
           // cast our ray
-          return mixColours(texCol, intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom));
+          return mixColours(texCol, intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyCol, useSkybox));
         // if it is a polished material (diffuse with clear coat)
         case 4:
           // apply roughness scale to normal
-          surfaceNormal = finalObj.normal;
           // add randomness to normal if the surface has a rough characteristic
-          if (finalObj.material.roughness > 0) {
-            surfaceNormal = addVectors(finalObj.normal, multiplyVector(unitSphereVector, finalObj.material.roughness * finalObj.material.roughness));
+          if (roughness > 0) {
+            normal = addVectors(normal, multiplyVector(unitSphereVector, roughness * roughness));
           }
 
           // determine if our material's polish will reflect at this point
-          cos_theta = Math.min(dotVectors(multiplyVector(ray.direction, -1), surfaceNormal), 1);
+          cos_theta = Math.min(dotVectors(multiplyVector(ray.direction, -1), normal), 1);
 
           // set a new target for the recursively cast ray (reflection or diffuse)
           // add reflection + diffuse
           if (reflectance(cos_theta) > rng()) {
-            target = reflectVector(ray.direction, surfaceNormal);
+            target = reflectVector(ray.direction, normal);
             recursiveRay = new Ray(finalObj.point, target);
-            reflectionColour = intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom);
+            reflectionColour = intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyCol, useSkybox);
           }
 
           // set a new target for the recursively cast ray based on the material we are hitting
-          target = subtractVectors(finalObj.point, subtractVectors(finalObj.point, addVectors(finalObj.normal, unitSphereVector)));
+          target = subtractVectors(finalObj.point, subtractVectors(finalObj.point, addVectors(normal, unitSphereVector)));
           
           // perform a light importance check if lights exist and the material is illuminated by them
           if (lights.length > 0) {
@@ -140,7 +164,7 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
                 area = lights[i].area();
                 dist = distanceSquared(area, finalObj.point);
                 let lightVec = subtractVectors(area, finalObj.point);
-                let dot = dotVectors(lightVec, finalObj.normal);
+                let dot = dotVectors(lightVec, normal);
                 if (dot > 0) {
                   target = lightVec;
                   pdf = dist / (dot * lights[i].radius);
@@ -150,15 +174,25 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
           }
           // create our recursive ray now after pdf creation
           recursiveRay = new Ray(finalObj.point, target);
-          return clampVector(divideVector(addVectors(reflectionColour, mixColours(texCol, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom), 0.5))), pdf), 0, 4880);
+          return clampVector(divideVector(addVectors(reflectionColour, mixColours(texCol, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyCol, useSkybox), 0.5))), pdf), 0, 4880);
       }
     }
   }
 
   // return the sky
-  const dir = normalizeVector(ray.direction);
-  const t = dir.y;
-  return addVectors(multiplyVector(skyBottom, t), multiplyVector(skyTop, (1 - t))); // multiply by 255?
+  if (!useSkybox) {
+    return skyCol;
+  } else {
+    // return the skybox
+    const pi = Math.PI;
+    const dir = ray.direction;
+    const theta = Math.acos(-dir.y);
+    const phi = Math.atan2(-dir.z, dir.x) + pi;
+    const u = phi / (2 * pi);
+    const v = theta / pi;
+    const skyData = skybox.getPixel(u, v);
+    return new Vector3(skyData.r * 255, skyData.g * 255, skyData.b * 255);
+  }
 }
 
 // used to refract a ray

@@ -1,14 +1,9 @@
 // normalize a given vector
 function normalizeVector(vector) {
-  const max = Math.max(Math.max(Math.abs(vector.x), Math.abs(vector.y)), Math.abs(vector.z));
+  const magnitude = Math.sqrt(magnitudeSquared(vector));
   
   // normalize and return a new Vector
-  let returnVector = new Vector3(vector.x, vector.y, vector.z);
-  if (max !== 0) {
-    returnVector.x /= max;
-    returnVector.y /= max;
-    returnVector.z /= max;
-  }
+  let returnVector = divideVector(vector, magnitude);
 
   return returnVector;
 }

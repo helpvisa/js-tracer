@@ -16,28 +16,31 @@ const depth = 6;
 let useBVH = false;
 
 // define our sky parameters (zero vectors are pitch black)
-let skyTop = new Vector3(0, 0, 0);
-let skyBottom = new Vector3(0, 0, 0);
+let skyCol = new Vector3(0, 0, 0);
+let useSkybox = true;
+let skybox;
+let img = new Image();
+img.src = "/textures/sky/studio_01.png";
 
 // define our camera
-let camera = new Camera(new Vector3(-30, -10, -10), new Vector3(3, 0, -60), new Vector3(0, 1, 0), 50, ratio);
+let camera = new Camera(new Vector3(0, -30, 40), new Vector3(0, 0, -60), new Vector3(0, 1, 0), 30, ratio);
 
 // define our materials
 // define our lights
 const light1 = new Material(2, new Vector3(1, 1, 1));
-light1.brightness = 3000;
+light1.brightness = 5000;
 const light2 = new Material(2, new Vector3(0.5, 1, 0.5));
 light2.brightness = 5000;
 const light3 = new Material(2, new Vector3(0.5, 0.5, 2));
 light3.brightness = 5000;
 
-const reflection1 = new Material(1, new Vector3(1, 1, 1));
+const reflection1 = new Material(1, new Vector3(1, 0.65, 0.2));
 reflection1.roughness = 0.3;
 const reflection2 = new Material(1, new Vector3(1, 0.035, 0.8));
 reflection2.roughness = 0;
 
 const refractive1 = new Material(3, new Vector3(1, 1, 1));
-refractive1.roughness = 0.4;
+refractive1.roughness = 0.25;
 
 const diffuse1 = new Material(0, new Vector3(1, 1, 1));
 const diffuse2 = new Material(0, new Vector3(0.025, 0.025, 1));
@@ -46,20 +49,23 @@ const diffuse3 = new Material(0, new Vector3(0.5, 1, 0.5));
 const polished1 = new Material(4, new Vector3(0.25, 1, 0.65));
 polished1.roughness = 0.7;
 
-const textured1 = new Material(0, new Vector3(1, 1, 0), true, 64);
+const textured1 = new Material(1, new Vector3(1, 0.2, 0.3), true, 48);
+textured1.diffuseTex = undefined;
+textured1.roughness = 0;
+textured1.normalMult = 0.35;
 
 // define our world
 const sphere1 = new Sphere(new Vector3(0, 0, -60), 18, textured1);
-const sphere2 = new Sphere(new Vector3(20.5, 13, -49), 8, reflection2);
+const sphere2 = new Sphere(new Vector3(24.5, 11, -49), 8, reflection2);
 const sphere3 = new Sphere(new Vector3(-37, -24, -40), 8, light1);
-const sphere4 = new Sphere(new Vector3(-28, 8, -55), 9, refractive1);
+const sphere4 = new Sphere(new Vector3(-26, 10.75, -55), 8, reflection1);
 const sphere5 = new Sphere(new Vector3(30, -22, -60), 8, light2);
-const sphere6 = new Sphere(new Vector3(0, 320, -60), 300, diffuse3);
+const sphere6 = new Sphere(new Vector3(0, 318, -60), 300, diffuse3);
 const sphere7 = new Sphere(new Vector3(-30, -10, -15), 6, light3);
 const rect1 = new Rectangle(-80, 80, -1000, -100, -150, light3);
 const rect2 = new Rectangle(-800, 800, -600, 600, -84, reflection1);
 
-const world = [sphere1, sphere3, sphere6];
+const world = [sphere1, sphere2, sphere4, sphere6];
 // for (let i = 0; i < 200; i++) {
 //   world.push(new Sphere(new Vector3(Math.random() * 600 - 300, Math.random() * 300 - 150, -200), Math.random() * 20, polished1));
 // }
@@ -68,7 +74,7 @@ const world = [sphere1, sphere3, sphere6];
 const masterBVH = new BVH(world);
 
 // create our lights array for sphere which emit light
-const lights = [sphere3]; // for biased raytracing
+const lights = []; // for biased raytracing
 
 
 //== define and manage page elements ==//
@@ -107,7 +113,12 @@ function main() {
   requestAnimationFrame(main);
 }
 
-requestAnimationFrame(main);
+// run once our images are loaded
+img.addEventListener("load", () => {
+  skybox = new Texture(img);
+  requestAnimationFrame(main);
+});
+
 // check how many samples are being rendered per second
 setInterval(samplesPerSecondCalc, 1000);
 
@@ -136,10 +147,10 @@ function raytrace() {
       // intersect this ray with the world
       // if we are using a BVH, do so here
       if (useBVH) {
-        colour = intersectWorld(ray, [masterBVH], 0.001, Infinity, depth, lights, skyTop, skyBottom);
+        colour = intersectWorld(ray, [masterBVH], 0.001, Infinity, depth, lights, skyCol, useSkybox);
       } else {
         // otherwise just render using the whole world array
-        colour = intersectWorld(ray, world, 0.001, Infinity, depth, lights, skyTop, skyBottom);
+        colour = intersectWorld(ray, world, 0.001, Infinity, depth, lights, skyCol, useSkybox);
       }
 
       // paint this colour to the buffer at the appropriate index
