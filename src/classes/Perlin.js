@@ -30,6 +30,10 @@ class Perlin {
   }
 
   get(x, y) {
+    // use modulo to make x and y values repeat
+    x = x % (this.nodes);
+    y = y % (this.nodes);
+    
     // return an intensity based on the input x and y values
     // get grid entries, forming a 2x2 "cell" of values to interpolate
     let x0 = Math.floor(Math.abs(x)); // prevent negative numbers from appearing, just in case
@@ -70,8 +74,18 @@ class Perlin {
 
   // get dot products
   dotGrid(x, y, gridX, gridY) {
-    let gradient = this.grid[gridX][gridY];
     let distance = {x: x - gridX, y: y - gridY};
+
+    // wrap grid values
+    if (gridX > this.nodes - 1) {
+      gridX = 0;
+    }
+    if (gridY > this.nodes - 1) {
+      gridY = 0;
+    }
+    
+    // then find our grid value
+    let gradient = this.grid[gridX][gridY];
     return distance.x * gradient.x + distance.y * gradient.y;
   }
 

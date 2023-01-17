@@ -105,7 +105,7 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
         // if it is diffuse
         case 0:
           // set a new target for the recursively cast ray based on the material we are hitting
-          target = subtractVectors(finalObj.point, addVectors(finalObj.point, addVectors(finalObj.normal, unitSphereVector)));
+          target = subtractVectors(finalObj.point, subtractVectors(finalObj.point, addVectors(finalObj.normal, unitSphereVector)));
 
           // perform a light importance check if lights exist and the material is illuminated by them
           if (lights.length > 0) {
@@ -191,7 +191,7 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
           }
 
           // set a new target for the recursively cast ray based on the material we are hitting
-          target = subtractVectors(finalObj.point, addVectors(finalObj.point, addVectors(finalObj.normal, unitSphereVector)));
+          target = subtractVectors(finalObj.point, subtractVectors(finalObj.point, addVectors(finalObj.normal, unitSphereVector)));
           
           // perform a light importance check if lights exist and the material is illuminated by them
           if (lights.length > 0) {
@@ -218,7 +218,7 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
   // return the sky
   const dir = normalizeVector(ray.direction);
   const t = dir.y;
-  return addVectors(multiplyVector(skyBottom, t), multiplyVector(skyTop, (1 - t)));
+  return addVectors(multiplyVector(skyBottom, t), multiplyVector(skyTop, (1 - t))); // multiply by 255?
 }
 
 // used to refract a ray

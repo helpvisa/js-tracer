@@ -1,15 +1,15 @@
 //== variable declaration ==//
 // define the width and height of our canvas, and determine its aspect ratio
 // 1920x1080 is not a sane value; most likely the canvas should be scaled/stretched to fit the screen after it has finished rendering
-let width = 320;
-let height = 240;
+let width = 500;
+let height = 500;
 let ratio = width / height;
 // tick tracking (for animation, updating on-page values)
 let oldSamples = 0;
 let tick = 0;
 // current sample (for accumulation multisampling) and set a max sample rate
 let sample = 0;
-let maxSamples = 10000;
+let maxSamples = 100000;
 // set the depth of our samples (# of bounces)
 const depth = 6;
 // define a global variable for whether we want to use BVH or not (defaults to false)
@@ -47,7 +47,7 @@ const polished1 = new Material(4, new Vector3(0.25, 1, 0.65));
 polished1.roughness = 0.35;
 
 // define our world
-const sphere1 = new Sphere(new Vector3(0, 0, -60), 18, diffuse1);
+const sphere1 = new Sphere(new Vector3(0, 0, -60), 18, polished1);
 const sphere2 = new Sphere(new Vector3(20.5, 13, -49), 8, reflection2);
 const sphere3 = new Sphere(new Vector3(-26, -19, -40), 8, light1);
 const sphere4 = new Sphere(new Vector3(-28, 8, -55), 9, refractive1);
@@ -98,9 +98,7 @@ function main() {
   samplesEl.textContent = "Samples so far: " + sample;
   depthEl.textContent = "Current ray depth: " + depth;
   if (sample < maxSamples) {
-    perlin.seed();
     raytrace();
-    // fillBufferPerlin();
   }
 
   // recursively call self
@@ -125,8 +123,8 @@ function raytrace() {
       // create vectors which store the unbiased traces and the biased traces, and the final colour
       let colour = new Vector3(0, 0, 0);
       // randomize UVs here (for multisampling 'antialiasing')
-      let randx = Math.random() - 0.5; // perlin.get(x / width * (perlinSize - 1), y / height * (perlinSize - 1)) * 2 - 1;
-      let randy = Math.random() - 0.5; // perlin.get(y / height * (perlinSize - 1), x / width * (perlinSize - 1)) * 2 - 1;
+      let randx = Math.random() - 0.5;
+      let randy = Math.random() - 0.5;
       const u = (x + randx) / width;
       const v = (y + randy) / height;
 
@@ -188,7 +186,7 @@ function fillBufferPerlin() {
   for (let y = 0; y < height; y++) {
     for (let x = 0; x < width; x++) {
       const index = getIndex(x, y, width);
-      let value = perlin.get(x / width * (perlinSize - 1), y / height * (perlinSize - 1)) * 255;
+      let value = perlin.get((x / width) * perlinSize * 4, (y / height) * perlinSize * 4) * 255;
       data[index] = value; // red
       data[index + 1] = value; // green
       data[index + 2] = value; // blue
