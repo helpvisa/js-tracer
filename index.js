@@ -16,16 +16,16 @@ const depth = 6;
 let useBVH = false;
 
 // define our sky parameters (zero vectors are pitch black)
-let skyTop = new Vector3(50, 50, 150);
-let skyBottom = new Vector3(100, 100, 250);
+let skyTop = new Vector3(0, 0, 0);
+let skyBottom = new Vector3(0, 0, 0);
 
 // define our camera
-let camera = new Camera(new Vector3(30, -100, -10), new Vector3(3, 0, -60), new Vector3(0, 1, 0), 50, ratio);
+let camera = new Camera(new Vector3(-30, -10, -10), new Vector3(3, 0, -60), new Vector3(0, 1, 0), 50, ratio);
 
 // define our materials
 // define our lights
-const light1 = new Material(2, new Vector3(1, 0.5, 0.5));
-light1.brightness = 5000;
+const light1 = new Material(2, new Vector3(1, 1, 1));
+light1.brightness = 3000;
 const light2 = new Material(2, new Vector3(0.5, 1, 0.5));
 light2.brightness = 5000;
 const light3 = new Material(2, new Vector3(0.5, 0.5, 2));
@@ -46,10 +46,12 @@ const diffuse3 = new Material(0, new Vector3(0.5, 1, 0.5));
 const polished1 = new Material(4, new Vector3(0.25, 1, 0.65));
 polished1.roughness = 0.7;
 
+const textured1 = new Material(0, new Vector3(1, 1, 0), true, 64);
+
 // define our world
-const sphere1 = new Sphere(new Vector3(0, 0, -60), 18, polished1);
+const sphere1 = new Sphere(new Vector3(0, 0, -60), 18, textured1);
 const sphere2 = new Sphere(new Vector3(20.5, 13, -49), 8, reflection2);
-const sphere3 = new Sphere(new Vector3(-26, -19, -40), 8, light1);
+const sphere3 = new Sphere(new Vector3(-37, -24, -40), 8, light1);
 const sphere4 = new Sphere(new Vector3(-28, 8, -55), 9, refractive1);
 const sphere5 = new Sphere(new Vector3(30, -22, -60), 8, light2);
 const sphere6 = new Sphere(new Vector3(0, 320, -60), 300, diffuse3);
@@ -57,7 +59,7 @@ const sphere7 = new Sphere(new Vector3(-30, -10, -15), 6, light3);
 const rect1 = new Rectangle(-80, 80, -1000, -100, -150, light3);
 const rect2 = new Rectangle(-800, 800, -600, 600, -84, reflection1);
 
-const world = [sphere1, sphere2, sphere3, sphere4, sphere5, sphere6, sphere7];
+const world = [sphere1, sphere3, sphere6];
 // for (let i = 0; i < 200; i++) {
 //   world.push(new Sphere(new Vector3(Math.random() * 600 - 300, Math.random() * 300 - 150, -200), Math.random() * 20, polished1));
 // }
@@ -66,7 +68,7 @@ const world = [sphere1, sphere2, sphere3, sphere4, sphere5, sphere6, sphere7];
 const masterBVH = new BVH(world);
 
 // create our lights array for sphere which emit light
-const lights = [sphere3, sphere5, sphere7]; // for biased raytracing
+const lights = [sphere3]; // for biased raytracing
 
 
 //== define and manage page elements ==//

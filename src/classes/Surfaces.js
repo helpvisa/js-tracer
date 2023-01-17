@@ -201,6 +201,17 @@ class Sphere extends Surface {
     let normal = divideVector(subtractVectors(point, this.origin), this.radius); // get the normal of the point on the sphere we hit
     let frontFace = setFaceNormal(ray, normal); // invert this normal if it is facing inward (we hit the inside of the sphere)
 
+    // calculate our texture coordinates in terms of u, v if we have a texture
+    let u = 0;
+    let v = 0;
+    if (this.material.useTex) {
+      const pi = Math.PI;
+      const theta = Math.cos(-normal.y);
+      const phi = Math.atan2(-normal.z, normal.x) + pi;
+      u = phi / (2 * pi);
+      v = theta / pi;
+    }
+
     // create a record of the information from this hit and return it as an object
     const hitObj = {
       t: t,
@@ -208,6 +219,8 @@ class Sphere extends Surface {
       normal: frontFace.normal,
       frontFace: frontFace.front,
       material: this.material,
+      u: u,
+      v: v,
       obj: this
     }
     return hitObj;

@@ -27,6 +27,14 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
       let cos_theta;
       let sin_theta;
 
+      // texture colour var
+      let texCol = finalObj.material.colour;
+      if (finalObj.material.useTex) {
+        let size = finalObj.material.textureSize;
+        let noise = finalObj.material.texture.get(finalObj.u * size, finalObj.v * size);
+        texCol = multiplyVector(finalObj.material.colour, noise);
+      }
+
       // set variables here for importance sampling to be used in switch
       let area;
       let pdf = 1;
@@ -57,7 +65,7 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
 
           // create our recursive ray now after pdf creation
           recursiveRay = new Ray(finalObj.point, target);
-          return clampVector(divideVector(mixColours(finalObj.material.colour, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom), 0.5)), pdf), 0, 4880);
+          return clampVector(divideVector(mixColours(texCol, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom), 0.5)), pdf), 0, 4880);
         // if it is purely reflective
         case 1:
           // skip our light pass, since this is pure reflection
@@ -72,10 +80,10 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
           recursiveRay = new Ray(finalObj.point, target);
           // cast our recursive ray
           // we do not multiply the returned ray by 0.5, since it is 'pure reflection' and thus loses no energy
-          return mixColours(finalObj.material.colour, intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom));
+          return mixColours(texCol, intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom));
         // if it is a light source
         case 2:
-          return multiplyVector(finalObj.material.colour, finalObj.material.brightness);
+          return multiplyVector(texCol, finalObj.material.brightness);
         // if it is refractive
         case 3:
           // our refraction ratio (should be inverted if hits a back face realistically)
@@ -101,7 +109,7 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
           recursiveRay = new Ray(finalObj.point, target);
 
           // cast our ray
-          return mixColours(finalObj.material.colour, intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom));
+          return mixColours(texCol, intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom));
         // if it is a polished material (diffuse with clear coat)
         case 4:
           // apply roughness scale to normal
@@ -142,7 +150,7 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyTop, skyBott
           }
           // create our recursive ray now after pdf creation
           recursiveRay = new Ray(finalObj.point, target);
-          return clampVector(divideVector(addVectors(reflectionColour, mixColours(finalObj.material.colour, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom), 0.5))), pdf), 0, 4880);
+          return clampVector(divideVector(addVectors(reflectionColour, mixColours(texCol, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyTop, skyBottom), 0.5))), pdf), 0, 4880);
       }
     }
   }
