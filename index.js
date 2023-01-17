@@ -20,7 +20,7 @@ let skyCol = new Vector3(0, 0, 0);
 let useSkybox = true;
 let skybox;
 let img = new Image();
-img.src = "/textures/sky/studio_01.png";
+img.src = "./textures/sky/studio_01.png";
 
 // define our camera
 let camera = new Camera(new Vector3(0, -30, 40), new Vector3(0, 0, -60), new Vector3(0, 1, 0), 30, ratio);
