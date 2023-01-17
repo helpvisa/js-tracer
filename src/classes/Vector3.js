@@ -16,3 +16,12 @@ class Vector3 {
     }
   }
 };
+
+// class that defines a Matrix
+class Matrix3 {
+  constructor(vec1 = new Vector3(0, 0, 0), vec2 = new Vector3(0, 0, 0), vec3 = new Vector3(0, 0, 0)) {
+    this.a = vec1;
+    this.b = vec2;
+    this.c = vec3;
+  }
+}

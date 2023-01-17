@@ -18,20 +18,32 @@ class Texture {
 
   // get a pixel from a given uv value
   getPixel(u, v) {
-    let x = Math.floor(u * this.width);
-    let y = Math.floor(v * this.height);
-    x = x % this.width;
-    y = y % this.height;
+    let uL = u * this.width;
+    let vL = v * this.height;
+    uL = uL % this.width;
+    vL = vL % this.height;
+    let x = Math.floor(uL);
+    let y = Math.floor(vL);
 
     // get indices, prepare for interpolation
+    let x1 = x + 1;
+    let y1 = y + 1;
+    // wrap values
+    if (x1 > this.width - 1) {
+      x1 = 0;
+    }
+    if (y1 > this.height - 1) {
+      y1 = 0;
+    }
+    // get our interpolation indices
     const topLeft = this.getIndex(x, y);
-    const topRight = this.getIndex(x + 1, y);
-    const bottomLeft = this.getIndex(x, y + 1);
-    const bottomRight = this.getIndex(x + 1, y + 1);
+    const topRight = this.getIndex(x1, y);
+    const bottomLeft = this.getIndex(x, y1);
+    const bottomRight = this.getIndex(x1, y1);
 
     // interpolate our values
-    const ix = u * this.width - x;
-    const iy = v * this.height - y;
+    const ix = uL - x;
+    const iy = vL - y;
 
     const r1 = this.interpolate(iy, this.data[topLeft], this.data[bottomLeft]);
     const r2 = this.interpolate(iy, this.data[topRight], this.data[bottomRight]);
@@ -46,13 +58,13 @@ class Texture {
     const b = this.interpolate(ix, b1, b2);
 
     // create our return obj
-    let col = {
+    let pixel = {
       r: r / 255,
       g: g / 255,
       b: b / 255
     }
 
-    return col;
+    return pixel;
   }
 
   // linear interpolator

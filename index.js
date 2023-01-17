@@ -1,8 +1,8 @@
 //== variable declaration ==//
 // define the width and height of our canvas, and determine its aspect ratio
 // 1920x1080 is not a sane value; most likely the canvas should be scaled/stretched to fit the screen after it has finished rendering
-let width = 320;
-let height = 240;
+let width = 480;
+let height = 270;
 let ratio = width / height;
 // tick tracking (for animation, updating on-page values)
 let oldSamples = 0;
@@ -11,7 +11,7 @@ let tick = 0;
 let sample = 0;
 let maxSamples = 100000;
 // set the depth of our samples (# of bounces)
-const depth = 6;
+const globalDepth = 4;
 // define a global variable for whether we want to use BVH or not (defaults to false)
 let useBVH = false;
 
@@ -19,28 +19,36 @@ let useBVH = false;
 let skyCol = new Vector3(0, 0, 0);
 let useSkybox = true;
 let skybox;
-let img = new Image();
-img.src = "./textures/sky/studio_01.png";
+
+// define and load our images
+let skyImage = new Image();
+skyImage.src = "./textures/sky/sky_01.png";
+let slabDiff = new Image();
+slabDiff.src = "./textures/slab/slab_diff.png";
+let slabRough = new Image();
+slabRough.src = "./textures/slab/slab_rough.png";
+let slabNorm = new Image();
+slabNorm.src = "./textures/slab/slab_norm.png";
 
 // define our camera
-let camera = new Camera(new Vector3(0, -30, 40), new Vector3(0, 0, -60), new Vector3(0, 1, 0), 30, ratio);
+let camera = new Camera(new Vector3(-10, 0, -20), new Vector3(0, 0, -60), new Vector3(0, 1, 0), 70, ratio);
 
 // define our materials
 // define our lights
 const light1 = new Material(2, new Vector3(1, 1, 1));
-light1.brightness = 5000;
+light1.brightness = 2000;
 const light2 = new Material(2, new Vector3(0.5, 1, 0.5));
 light2.brightness = 5000;
 const light3 = new Material(2, new Vector3(0.5, 0.5, 2));
 light3.brightness = 5000;
 
-const reflection1 = new Material(1, new Vector3(1, 0.65, 0.2));
-reflection1.roughness = 0.3;
+const reflection1 = new Material(1, new Vector3(1, 1, 1));
+reflection1.roughness = 0.25;
 const reflection2 = new Material(1, new Vector3(1, 0.035, 0.8));
 reflection2.roughness = 0;
 
 const refractive1 = new Material(3, new Vector3(1, 1, 1));
-refractive1.roughness = 0.25;
+refractive1.roughness = 0;
 
 const diffuse1 = new Material(0, new Vector3(1, 1, 1));
 const diffuse2 = new Material(0, new Vector3(0.025, 0.025, 1));
@@ -49,32 +57,30 @@ const diffuse3 = new Material(0, new Vector3(0.5, 1, 0.5));
 const polished1 = new Material(4, new Vector3(0.25, 1, 0.65));
 polished1.roughness = 0.7;
 
-const textured1 = new Material(1, new Vector3(1, 0.2, 0.3), true, 48);
-textured1.diffuseTex = undefined;
-textured1.roughness = 0;
-textured1.normalMult = 0.35;
+const textured1 = new Material(4, new Vector3(1, 1, 1));
+textured1.roughness = 1;
+textured1.normalMult = 1;
+textured1.tilingX = 2;
+textured1.tilingY = 2;
 
 // define our world
 const sphere1 = new Sphere(new Vector3(0, 0, -60), 18, textured1);
 const sphere2 = new Sphere(new Vector3(24.5, 11, -49), 8, reflection2);
-const sphere3 = new Sphere(new Vector3(-37, -24, -40), 8, light1);
-const sphere4 = new Sphere(new Vector3(-26, 10.75, -55), 8, reflection1);
+const sphere3 = new Sphere(new Vector3(-37, -30, -40), 8, light1);
+const sphere4 = new Sphere(new Vector3(-26, 10.75, -55), 8, refractive1);
 const sphere5 = new Sphere(new Vector3(30, -22, -60), 8, light2);
 const sphere6 = new Sphere(new Vector3(0, 318, -60), 300, diffuse3);
 const sphere7 = new Sphere(new Vector3(-30, -10, -15), 6, light3);
 const rect1 = new Rectangle(-80, 80, -1000, -100, -150, light3);
 const rect2 = new Rectangle(-800, 800, -600, 600, -84, reflection1);
 
-const world = [sphere1, sphere2, sphere4, sphere6];
-// for (let i = 0; i < 200; i++) {
-//   world.push(new Sphere(new Vector3(Math.random() * 600 - 300, Math.random() * 300 - 150, -200), Math.random() * 20, polished1));
-// }
+const world = [sphere1, sphere3, sphere6];
 
 // create a master BVH container
 const masterBVH = new BVH(world);
 
 // create our lights array for sphere which emit light
-const lights = []; // for biased raytracing
+const lights = [sphere3]; // for biased raytracing
 
 
 //== define and manage page elements ==//
@@ -113,11 +119,14 @@ function main() {
   requestAnimationFrame(main);
 }
 
-// run once our images are loaded
-img.addEventListener("load", () => {
-  skybox = new Texture(img);
+// call our rendering once the whole webpage has loaded
+window.onload = () => {
+  skybox = new Texture(skyImage);
+  textured1.diffuseTex = new Texture(slabDiff);
+  textured1.roughnessTex = new Texture(slabRough);
+  textured1.normalTex = new Texture(slabNorm);
   requestAnimationFrame(main);
-});
+};
 
 // check how many samples are being rendered per second
 setInterval(samplesPerSecondCalc, 1000);
@@ -147,10 +156,10 @@ function raytrace() {
       // intersect this ray with the world
       // if we are using a BVH, do so here
       if (useBVH) {
-        colour = intersectWorld(ray, [masterBVH], 0.001, Infinity, depth, lights, skyCol, useSkybox);
+        colour = intersectWorld(ray, [masterBVH], 0.001, Infinity, globalDepth, lights, skyCol, useSkybox);
       } else {
         // otherwise just render using the whole world array
-        colour = intersectWorld(ray, world, 0.001, Infinity, depth, lights, skyCol, useSkybox);
+        colour = intersectWorld(ray, world, 0.001, Infinity, globalDepth, lights, skyCol, useSkybox);
       }
 
       // paint this colour to the buffer at the appropriate index

@@ -31,34 +31,54 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyCol, useSkyb
       let roughness = finalObj.material.roughness;
       let normal = finalObj.normal;
       // calc texture values
-      // first check if perlin is used
-      if (finalObj.material.perlin) {
-        // check for diffuse
-        if (finalObj.material.diffuseTex) {
+      // check for a diffuse texture map
+      if (finalObj.material.diffuseTex) {
+        if (finalObj.material.diffNoise) {
           const diffSize = finalObj.material.diffSize;
           const diffNoise = finalObj.material.diffuseTex.get(finalObj.u * diffSize, finalObj.v * diffSize);
           texCol = multiplyVector(finalObj.material.colour, diffNoise);
+        } else {
+          const texData = finalObj.material.diffuseTex.getPixel(finalObj.u * finalObj.material.tilingX, finalObj.v * finalObj.material.tilingY);
+          texCol = mixColours(texCol, new Vector3(texData.r, texData.g, texData.b));
         }
-        // check for roughness map
-        if (finalObj.material.roughnessTex) {
+      }
+      // check for a roughess map
+      if (finalObj.material.roughnessTex) {
+        if (finalObj.material.roughNoise) {
           const roughSize = finalObj.material.roughSize;
           const roughNoise = finalObj.material.roughnessTex.get(finalObj.u * roughSize, finalObj.v * roughSize);
           roughness = roughness * roughNoise;
+        } else {
+          const texData = finalObj.material.roughnessTex.getPixel(finalObj.u * finalObj.material.tilingX, finalObj.v * finalObj.material.tilingY);
+          roughness = texData.r * roughness;
         }
-        // check for normal map
-        if (finalObj.material.normalTex) {
+      }
+      // check for a normal map
+      if (finalObj.material.normalTex) {
+        if (finalObj.material.normNoise) {
           const normSize = finalObj.material.roughSize;
           const normXNoise = finalObj.material.normalTex.x.get(finalObj.u * normSize, finalObj.v * normSize);
           const normYNoise = finalObj.material.normalTex.y.get(finalObj.u * normSize, finalObj.v * normSize);
           normal.x += (normXNoise * 2 - 1) * finalObj.material.normalMult;
           normal.y += (normYNoise * 2 - 1) * finalObj.material.normalMult;
-        }
-      } else { // otherwise sample the associated image texture
-        if (finalObj.material.diffuseTex) {
-          const texData = finalObj.material.diffuseTex.getPixel(finalObj.u, finalObj.v);
-          texCol.x = texData.r;
-          texCol.y = texData.g;
-          texCol.z = texData.b;
+        } else {
+          // acquire our normalmap data
+          const texData = finalObj.material.normalTex.getPixel(finalObj.u * finalObj.material.tilingX, finalObj.v * finalObj.material.tilingY);
+          let texNormal = new Vector3(texData.r, texData.g, texData.b);
+          // find our tangent space
+          let t = crossVectors(normal, new Vector3(0, 1, 0));
+          if (!magnitudeSquared(t)) {
+            t = crossVectors(normal, new Vetor3(0, 0, 1));
+          }
+          t = normalizeVector(t);
+          let b = normalizeVector(crossVectors(normal, t));
+          // take our normal texture and convert it to -1 to 1 space
+          texNormal = subtractVectors(multiplyVector(texNormal, 2), new Vector3(1, 1, 1));
+          texNormal.x *= 3 * finalObj.material.normalMult;
+          texNormal.y *= 3 * finalObj.material.normalMult;
+          // add our tangent normal to our world normal using matrix -> vector multiplication
+          let tbn = new Matrix3(t, b, normal);
+          normal = normalizeVector(matMult(tbn, texNormal));
         }
       }
 
@@ -191,7 +211,8 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyCol, useSkyb
     const u = phi / (2 * pi);
     const v = theta / pi;
     const skyData = skybox.getPixel(u, v);
-    return new Vector3(skyData.r * 255, skyData.g * 255, skyData.b * 255);
+    let mult = 255;
+    return new Vector3(skyData.r * mult, skyData.g * mult, skyData.b * mult);
   }
 }
 

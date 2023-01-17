@@ -1,39 +1,61 @@
 // defines a set of classes which can be used to change the appearance of surfaces
 class Material {
-  constructor(type = 0, colour = new Vector3(1, 1, 1), perlin = false, perlinSize = 16) {
+  constructor(type = 0, colour = new Vector3(1, 1, 1), diffNoise = false, roughNoise = false, normNoise = false, perlinSize = 32) {
     // types are 0 = diffuse, 1 = reflective, 2 = light, 3 = refractive, 4 = polished
     this.type = type;
     this.colour = colour;
-    this.perlin = perlin;
-    if (this.perlin) {
+    this.diffNoise = diffNoise;
+    this.roughNoise = roughNoise;
+    this.normNoise = normNoise;
+    this.normalMult = 1;
+    this.tilingX = 3;
+    this.tilingY = 3;
+
+    // set our noise maps if they are used
+    if (this.diffNoise) {
       // diffuse colour
       this.diffSize = perlinSize;
       this.diffuseTex = new Perlin(perlinSize); // store a perlin noise texture within the material at a fixed size
+    }
+    if (this.roughNoise) {
       // roughness map
       this.roughSize = perlinSize;
       this.roughnessTex = new Perlin(perlinSize);
+    }
+    if (this.normNoise) {
       // normal map (2 channels)
       this.normalTex = {
         x: new Perlin(perlinSize),
         y: new Perlin(perlinSize)
       };
-      this.normalMult = 1;
     }
 
     // create new keys based on material type
     switch (this.type) {
       // if it is reflective
       case 1:
-        this.roughness = 0; // a value that determines the roughness of the surface reflection
+        if (this.roughnessTex) {
+          this.roughness = 1; // a value that determines the roughness of the surface reflection
+        } else {
+          this.roughness = 0;
+        }
         break;
       case 2:
-        this.brightness = 500; // multiplier for overall brightness
+        this.brightness = 1000; // multiplier for overall brightness
       case 3:
-        this.roughness = 0; // a value that determines the roughness of the surface refraction
+        if (this.roughnessTex) {
+          this.roughness = 1; // a value that determines roughness of the surface refraction
+        } else {
+          this.roughness = 0;
+        }
         this.ior = 1.52; // a value that determines the index of refraction
         break;
       case 4:
-        this.roughness = 0; // roughness of surface reflection
+        if (this.roughnessTex) {
+          this.roughness = 1; // roughness of surface reflection
+        } else {
+          this.roughness = 0;
+        }
     }
   }
 }

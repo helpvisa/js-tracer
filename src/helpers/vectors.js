@@ -174,3 +174,12 @@ function mixColours(col1, col2) {
 
   return returnVector;
 }
+
+//== matrix multiplication function ==//
+function matMult(mat, vec) {
+  let a = dotVectors(mat.a, vec);
+  let b = dotVectors(mat.b, vec);
+  let c = dotVectors(mat.c, vec);
+
+  return new Vector3(a, b, c);
+}
