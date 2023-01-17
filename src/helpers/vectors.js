@@ -150,11 +150,15 @@ function clampVector(vec, min, max) {
 //== generate and return random vectors ==//
 // generate a random vector
 function randomVector() {
-  return new Vector3(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1); // between -1  and 1
+  const rand1 = Math.random() * (perlinSize - 1);
+  const rand2 = Math.random() * (perlinSize - 1);
+  const rand3 = Math.random() * (perlinSize - 1);
+  return new Vector3(perlin.get(rand1, rand2) * 6 - 3, perlin.get(rand2, rand3) * 6 - 3, perlin.get(rand3, rand1) * 6 - 3); // between -1  and 1
+  // return new Vector3(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1)
 }
 
 function normalizedRandomVector() {
-  let returnVector = new Vector3(Math.random() * 2 - 1, Math.random() * 2 - 1, Math.random() * 2 - 1); // between -1  and 1
+  let returnVector = randomVector();
   returnVector = normalizeVector(returnVector);
   return returnVector;
 }
