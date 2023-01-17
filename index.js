@@ -1,8 +1,8 @@
 //== variable declaration ==//
 // define the width and height of our canvas, and determine its aspect ratio
 // 1920x1080 is not a sane value; most likely the canvas should be scaled/stretched to fit the screen after it has finished rendering
-let width = 500;
-let height = 500;
+let width = 320;
+let height = 240;
 let ratio = width / height;
 // tick tracking (for animation, updating on-page values)
 let oldSamples = 0;
@@ -20,31 +20,31 @@ let skyTop = new Vector3(50, 50, 150);
 let skyBottom = new Vector3(100, 100, 250);
 
 // define our camera
-let camera = new Camera(new Vector3(0, 0, -10), new Vector3(3, 0, -60), new Vector3(0, 1, 0), 50, ratio);
+let camera = new Camera(new Vector3(30, -100, -10), new Vector3(3, 0, -60), new Vector3(0, 1, 0), 50, ratio);
 
 // define our materials
 // define our lights
 const light1 = new Material(2, new Vector3(1, 0.5, 0.5));
-light1.brightness = 10000;
+light1.brightness = 5000;
 const light2 = new Material(2, new Vector3(0.5, 1, 0.5));
-light2.brightness = 10000;
+light2.brightness = 5000;
 const light3 = new Material(2, new Vector3(0.5, 0.5, 2));
-light3.brightness = 10000;
+light3.brightness = 5000;
 
 const reflection1 = new Material(1, new Vector3(1, 1, 1));
-reflection1.roughness = 0.2;
+reflection1.roughness = 0.3;
 const reflection2 = new Material(1, new Vector3(1, 0.035, 0.8));
-reflection2.roughness = 0.2;
+reflection2.roughness = 0;
 
 const refractive1 = new Material(3, new Vector3(1, 1, 1));
-refractive1.roughness = 0;
+refractive1.roughness = 0.4;
 
 const diffuse1 = new Material(0, new Vector3(1, 1, 1));
 const diffuse2 = new Material(0, new Vector3(0.025, 0.025, 1));
 const diffuse3 = new Material(0, new Vector3(0.5, 1, 0.5));
 
 const polished1 = new Material(4, new Vector3(0.25, 1, 0.65));
-polished1.roughness = 0.35;
+polished1.roughness = 0.7;
 
 // define our world
 const sphere1 = new Sphere(new Vector3(0, 0, -60), 18, polished1);
@@ -57,7 +57,7 @@ const sphere7 = new Sphere(new Vector3(-30, -10, -15), 6, light3);
 const rect1 = new Rectangle(-80, 80, -1000, -100, -150, light3);
 const rect2 = new Rectangle(-800, 800, -600, 600, -84, reflection1);
 
-const world = [sphere1, sphere2, sphere3, sphere4, sphere5, sphere6, sphere7, rect2];
+const world = [sphere1, sphere2, sphere3, sphere4, sphere5, sphere6, sphere7];
 // for (let i = 0; i < 200; i++) {
 //   world.push(new Sphere(new Vector3(Math.random() * 600 - 300, Math.random() * 300 - 150, -200), Math.random() * 20, polished1));
 // }
@@ -123,8 +123,8 @@ function raytrace() {
       // create vectors which store the unbiased traces and the biased traces, and the final colour
       let colour = new Vector3(0, 0, 0);
       // randomize UVs here (for multisampling 'antialiasing')
-      let randx = Math.random() - 0.5;
-      let randy = Math.random() - 0.5;
+      let randx = rng() * 2 - 1;
+      let randy = rng() * 2 - 1;
       const u = (x + randx) / width;
       const v = (y + randy) / height;
 

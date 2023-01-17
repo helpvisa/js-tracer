@@ -1,9 +1,11 @@
 // defines a set of classes which can be used to change the appearance of surfaces
 class Material {
-  constructor(type = 0, colour = new Vector3(1, 1, 1)) {
+  constructor(type = 0, colour = new Vector3(1, 1, 1), textureSize = 8) {
     // types are 0 = diffuse, 1 = reflective, 2 = light, 3 = refractive, 4 = polished
     this.type = type;
     this.colour = colour;
+    this.textureSize = textureSize; // size of perlin texture
+    this.texture = new Perlin(this.textureSize); // store a perlin noise texture within the material at a fixed size
 
     // create new keys based on material type
     switch (this.type) {
