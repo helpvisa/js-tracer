@@ -13,16 +13,55 @@ class Texture {
     // render our image to our context
     this.context.drawImage(this.image, 0, 0);
     // read once, store in an array of pixels
-    this.data = this.context.getImageData(0, 0, this.width, this.height);
+    this.data = this.context.getImageData(0, 0, this.width, this.height).data;
   }
 
   // get a pixel from a given uv value
   getPixel(u, v) {
-    const index = Math.floor(v * this.height) * (this.width * 4) + Math.floor(u * this.width) * 4;
-    return {
-      r: this.data.data[index] / 255,
-      g: this.data.data[index + 1] / 255,
-      b: this.data.data[index + 2] / 255
-    };
+    let x = Math.floor(u * this.width);
+    let y = Math.floor(v * this.height);
+    x = x % this.width;
+    y = y % this.height;
+
+    // get indices, prepare for interpolation
+    const topLeft = this.getIndex(x, y);
+    const topRight = this.getIndex(x + 1, y);
+    const bottomLeft = this.getIndex(x, y + 1);
+    const bottomRight = this.getIndex(x + 1, y + 1);
+
+    // interpolate our values
+    const ix = u * this.width - x;
+    const iy = v * this.height - y;
+
+    const r1 = this.interpolate(iy, this.data[topLeft], this.data[bottomLeft]);
+    const r2 = this.interpolate(iy, this.data[topRight], this.data[bottomRight]);
+    const r = this.interpolate(ix, r1, r2);
+
+    const g1 = this.interpolate(iy, this.data[topLeft + 1], this.data[bottomLeft + 1]);
+    const g2 = this.interpolate(iy, this.data[topRight + 1], this.data[bottomRight + 1]);
+    const g = this.interpolate(ix, g1, g2);
+
+    const b1 = this.interpolate(iy, this.data[topLeft + 2], this.data[bottomLeft + 2]);
+    const b2 = this.interpolate(iy, this.data[topRight + 2], this.data[bottomRight + 2]);
+    const b = this.interpolate(ix, b1, b2);
+
+    // create our return obj
+    let col = {
+      r: r / 255,
+      g: g / 255,
+      b: b / 255
+    }
+
+    return col;
+  }
+
+  // linear interpolator
+  interpolate(val, a, b) {
+    return a + val * (b - a);
+  }
+
+  // map index
+  getIndex(x, y) {
+    return y * (this.width * 4) + x * 4
   }
 }
