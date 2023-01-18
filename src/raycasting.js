@@ -202,6 +202,12 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyCol, useSkyb
           recursiveRay = new Ray(finalObj.point, target);
           return clampVector(divideVector(addVectors(reflectionColour, mixColours(texCol, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyCol, useSkybox), 0.5))), pdf), 0, 4880);
         case 5:
+          // amount to mix our reflection with the metal colour at this point
+          let diffMixFactor = 1 - metalness;
+          let refMixFactor;
+          // preset our willReflect var to false so we can skip a calculation later if possible
+          let willReflect = false;
+          
           // apply roughness scale to normal
           // add randomness to normal if the surface has a rough characteristic
           if (roughness > 0) {
@@ -209,8 +215,14 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyCol, useSkyb
           }
 
           // get our reflection information
-          cos_theta = Math.min(dotVectors(multiplyVector(ray.direction, -1), normal), 1);
-          if (reflectance(cos_theta) > rng() || metalness > 0) {
+          if (metalness < 1) {
+            cos_theta = Math.min(dotVectors(multiplyVector(ray.direction, -1), normal), 1);
+            willReflect = reflectance(cos_theta) > rng();
+          }
+          // use the will reflect bool to create a mix factor for our non-metal reflections
+          refMixFactor = willReflect ? diffMixFactor : 0;
+          // calc our reflection ray if necessary
+          if (willReflect || metalness > 0) {
             target = reflectVector(ray.direction, normal);
             recursiveRay = new Ray(finalObj.point, target);
             reflectionColour = intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyCol, useSkybox);
@@ -238,11 +250,9 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyCol, useSkyb
           recursiveRay = new Ray(finalObj.point, target);
           let mainColour = clampVector(divideVector(mixColours(texCol, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyCol, useSkybox), 0.5)), pdf), 0, 4880);
 
-          // amount to mix our reflection with the metal colour at this point
-          let mixFactor = 1 - metalness;
           // mix our reflection and dielectric colours and add them
-          reflectionColour = addVectors(multiplyVector(mixColours(reflectionColour, texCol), metalness), multiplyVector(reflectionColour, mixFactor));
-          mainColour = multiplyVector(mainColour, mixFactor);
+          reflectionColour = addVectors(multiplyVector(mixColours(reflectionColour, texCol), metalness), multiplyVector(reflectionColour, refMixFactor));
+          mainColour = multiplyVector(mainColour, diffMixFactor);
           // return our new mixed colours
           return addVectors(mainColour, reflectionColour);
       }

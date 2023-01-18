@@ -22,7 +22,7 @@ let skybox;
 
 // define and load our images
 let skyImage = new Image();
-skyImage.src = "./textures/sky/vestibule.png";
+skyImage.src = "./textures/sky/sky_01.png";
 let slabDiff = new Image();
 slabDiff.src = "./textures/metal_plate/plate_diff.png";
 let slabRough = new Image();
@@ -38,7 +38,7 @@ let camera = new Camera(new Vector3(-30, 0, -30), new Vector3(0, 0, -60), new Ve
 // define our materials
 // define our lights
 const light1 = new Material(2, new Vector3(1, 1, 1));
-light1.brightness = 1500;
+light1.brightness = 6000;
 const light2 = new Material(2, new Vector3(0.5, 1, 0.5));
 light2.brightness = 5000;
 const light3 = new Material(2, new Vector3(0.5, 0.5, 2));
@@ -61,7 +61,7 @@ polished1.roughness = 0.7;
 
 const textured1 = new Material(5, new Vector3(1, 1, 1));
 textured1.roughness = 1;
-textured1.normalMult = 2;
+textured1.normalMult = 1;
 textured1.metalness = 1;
 textured1.tilingX = 2;
 textured1.tilingY = 2;
@@ -69,7 +69,7 @@ textured1.tilingY = 2;
 // define our world
 const sphere1 = new Sphere(new Vector3(0, 0, -60), 18, textured1);
 const sphere2 = new Sphere(new Vector3(24.5, 11, -49), 8, reflection2);
-const sphere3 = new Sphere(new Vector3(-37, -30, -40), 8, light1);
+const sphere3 = new Sphere(new Vector3(-37, -10, -40), 8, light1);
 const sphere4 = new Sphere(new Vector3(-26, 10.75, -55), 8, refractive1);
 const sphere5 = new Sphere(new Vector3(30, -22, -60), 8, light2);
 const sphere6 = new Sphere(new Vector3(0, 318, -60), 300, diffuse3);
