@@ -29,6 +29,7 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyCol, useSkyb
       // texture colour var
       let texCol = finalObj.material.colour;
       let roughness = finalObj.material.roughness;
+      let metalness = finalObj.material.metalness;
       let normal = finalObj.normal;
       // calc texture values
       // check for a diffuse texture map
@@ -74,12 +75,17 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyCol, useSkyb
           let b = normalizeVector(crossVectors(normal, t));
           // take our normal texture and convert it to -1 to 1 space
           texNormal = subtractVectors(multiplyVector(texNormal, 2), new Vector3(1, 1, 1));
-          texNormal.x *= 3 * finalObj.material.normalMult;
-          texNormal.y *= 3 * finalObj.material.normalMult;
+          texNormal.x *= -finalObj.material.normalMult;
+          texNormal.y *= finalObj.material.normalMult;
           // add our tangent normal to our world normal using matrix -> vector multiplication
           let tbn = new Matrix3(t, b, normal);
           normal = normalizeVector(matMult(tbn, texNormal));
         }
+      }
+      // check for a metalness map
+      if (finalObj.material.metalTex) {
+        const texData = finalObj.material.metalTex.getPixel(finalObj.u * finalObj.material.tilingX, finalObj.v * finalObj.material.tilingY);
+        metalness = texData.r * metalness;
       }
 
       // set variables here for importance sampling to be used in switch
@@ -195,6 +201,50 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyCol, useSkyb
           // create our recursive ray now after pdf creation
           recursiveRay = new Ray(finalObj.point, target);
           return clampVector(divideVector(addVectors(reflectionColour, mixColours(texCol, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyCol, useSkybox), 0.5))), pdf), 0, 4880);
+        case 5:
+          // apply roughness scale to normal
+          // add randomness to normal if the surface has a rough characteristic
+          if (roughness > 0) {
+            normal = addVectors(normal, multiplyVector(unitSphereVector, roughness * roughness));
+          }
+
+          // get our reflection information
+          cos_theta = Math.min(dotVectors(multiplyVector(ray.direction, -1), normal), 1);
+          if (reflectance(cos_theta) > rng() || metalness > 0) {
+            target = reflectVector(ray.direction, normal);
+            recursiveRay = new Ray(finalObj.point, target);
+            reflectionColour = intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyCol, useSkybox);
+          }
+
+          // set a new target for the recursively cast ray based on the material we are hitting
+          target = subtractVectors(finalObj.point, subtractVectors(finalObj.point, addVectors(normal, unitSphereVector)));
+          
+          // perform a light importance check if lights exist and the material is illuminated by them
+          if (lights.length > 0) {
+            for (let i = 0; i < lights.length; i++) {
+              if (rng() > 0.5) {
+                area = lights[i].area();
+                dist = distanceSquared(area, finalObj.point);
+                let lightVec = subtractVectors(area, finalObj.point);
+                let dot = dotVectors(lightVec, normal);
+                if (dot > 0) {
+                  target = lightVec;
+                  pdf = dist / (dot * lights[i].radius);
+                }
+              }
+            }
+          }
+          // create our recursive ray now after pdf creation
+          recursiveRay = new Ray(finalObj.point, target);
+          let mainColour = clampVector(divideVector(mixColours(texCol, multiplyVector(intersectWorld(recursiveRay, world, 0.001, Infinity, depth - 1, lights, skyCol, useSkybox), 0.5)), pdf), 0, 4880);
+
+          // amount to mix our reflection with the metal colour at this point
+          let mixFactor = 1 - metalness;
+          // mix our reflection and dielectric colours and add them
+          reflectionColour = addVectors(multiplyVector(mixColours(reflectionColour, texCol), metalness), multiplyVector(reflectionColour, mixFactor));
+          mainColour = multiplyVector(mainColour, mixFactor);
+          // return our new mixed colours
+          return addVectors(mainColour, reflectionColour);
       }
     }
   }

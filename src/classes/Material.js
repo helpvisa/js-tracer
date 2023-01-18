@@ -1,7 +1,7 @@
 // defines a set of classes which can be used to change the appearance of surfaces
 class Material {
   constructor(type = 0, colour = new Vector3(1, 1, 1), diffNoise = false, roughNoise = false, normNoise = false, perlinSize = 32) {
-    // types are 0 = diffuse, 1 = reflective, 2 = light, 3 = refractive, 4 = polished
+    // types are 0 = diffuse, 1 = reflective, 2 = light, 3 = refractive, 4 = polished, 5 = full pbr
     this.type = type;
     this.colour = colour;
     this.diffNoise = diffNoise;
@@ -10,6 +10,8 @@ class Material {
     this.normalMult = 1;
     this.tilingX = 3;
     this.tilingY = 3;
+    // create an undefined key for our metalTex
+    this.metalTex = null;
 
     // set our noise maps if they are used
     if (this.diffNoise) {
@@ -55,6 +57,18 @@ class Material {
           this.roughness = 1; // roughness of surface reflection
         } else {
           this.roughness = 0;
+        }
+        break;
+      case 5:
+        if (this.roughnessTex) {
+          this.roughness = 1;
+        } else {
+          this.roughness = 0;
+        }
+        if (this.metalTex) {
+          this.metalness = 1;
+        } else {
+          this.metalness = 0;
         }
     }
   }

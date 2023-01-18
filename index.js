@@ -1,8 +1,8 @@
 //== variable declaration ==//
 // define the width and height of our canvas, and determine its aspect ratio
 // 1920x1080 is not a sane value; most likely the canvas should be scaled/stretched to fit the screen after it has finished rendering
-let width = 480;
-let height = 270;
+let width = 320;
+let height = 240;
 let ratio = width / height;
 // tick tracking (for animation, updating on-page values)
 let oldSamples = 0;
@@ -22,21 +22,23 @@ let skybox;
 
 // define and load our images
 let skyImage = new Image();
-skyImage.src = "./textures/sky/sky_01.png";
+skyImage.src = "./textures/sky/vestibule.png";
 let slabDiff = new Image();
-slabDiff.src = "./textures/slab/slab_diff.png";
+slabDiff.src = "./textures/metal_plate/plate_diff.png";
 let slabRough = new Image();
-slabRough.src = "./textures/slab/slab_rough.png";
+slabRough.src = "./textures/metal_plate/plate_rough.png";
 let slabNorm = new Image();
-slabNorm.src = "./textures/slab/slab_norm.png";
+slabNorm.src = "./textures/metal_plate/plate_norm.png";
+let slabMetal = new Image();
+slabMetal.src = "./textures/metal_plate/plate_metal.png";
 
 // define our camera
-let camera = new Camera(new Vector3(-10, 0, -20), new Vector3(0, 0, -60), new Vector3(0, 1, 0), 70, ratio);
+let camera = new Camera(new Vector3(-30, 0, -30), new Vector3(0, 0, -60), new Vector3(0, 1, 0), 70, ratio);
 
 // define our materials
 // define our lights
 const light1 = new Material(2, new Vector3(1, 1, 1));
-light1.brightness = 2000;
+light1.brightness = 1500;
 const light2 = new Material(2, new Vector3(0.5, 1, 0.5));
 light2.brightness = 5000;
 const light3 = new Material(2, new Vector3(0.5, 0.5, 2));
@@ -57,9 +59,10 @@ const diffuse3 = new Material(0, new Vector3(0.5, 1, 0.5));
 const polished1 = new Material(4, new Vector3(0.25, 1, 0.65));
 polished1.roughness = 0.7;
 
-const textured1 = new Material(4, new Vector3(1, 1, 1));
+const textured1 = new Material(5, new Vector3(1, 1, 1));
 textured1.roughness = 1;
-textured1.normalMult = 1;
+textured1.normalMult = 2;
+textured1.metalness = 1;
 textured1.tilingX = 2;
 textured1.tilingY = 2;
 
@@ -110,7 +113,7 @@ const renderBuffer = context.createImageData(width, height);
 function main() {
   // update our on-page elements
   samplesEl.textContent = "Samples so far: " + sample;
-  depthEl.textContent = "Current ray depth: " + depth;
+  depthEl.textContent = "Current ray depth: " + globalDepth;
   if (sample < maxSamples) {
     raytrace();
   }
@@ -125,6 +128,7 @@ window.onload = () => {
   textured1.diffuseTex = new Texture(slabDiff);
   textured1.roughnessTex = new Texture(slabRough);
   textured1.normalTex = new Texture(slabNorm);
+  textured1.metalTex = new Texture(slabMetal);
   requestAnimationFrame(main);
 };
 
