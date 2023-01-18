@@ -24,21 +24,21 @@ let skybox;
 let skyImage = new Image();
 skyImage.src = "./textures/sky/sky_01.png";
 let slabDiff = new Image();
-slabDiff.src = "./textures/metal_plate/plate_diff.png";
+slabDiff.src = "./textures/slab/slab_diff.png";
 let slabRough = new Image();
-slabRough.src = "./textures/metal_plate/plate_rough.png";
+slabRough.src = "./textures/slab/slab_rough.png";
 let slabNorm = new Image();
-slabNorm.src = "./textures/metal_plate/plate_norm.png";
+slabNorm.src = "./textures/slab/slab_norm.png";
 let slabMetal = new Image();
-slabMetal.src = "./textures/metal_plate/plate_metal.png";
+slabMetal.src = "./textures/grate/grate_metal.png";
 
 // define our camera
-let camera = new Camera(new Vector3(-30, 0, -30), new Vector3(0, 0, -60), new Vector3(0, 1, 0), 70, ratio);
+let camera = new Camera(new Vector3(-30, 0, -30), new Vector3(-4, -3, -60), new Vector3(0, 1, 0), 20, ratio);
 
 // define our materials
 // define our lights
 const light1 = new Material(2, new Vector3(1, 1, 1));
-light1.brightness = 6000;
+light1.brightness = 1700;
 const light2 = new Material(2, new Vector3(0.5, 1, 0.5));
 light2.brightness = 5000;
 const light3 = new Material(2, new Vector3(0.5, 0.5, 2));
@@ -59,10 +59,10 @@ const diffuse3 = new Material(0, new Vector3(0.5, 1, 0.5));
 const polished1 = new Material(4, new Vector3(0.25, 1, 0.65));
 polished1.roughness = 0.7;
 
-const textured1 = new Material(5, new Vector3(1, 1, 1));
+const textured1 = new Material(4, new Vector3(1, 1, 1));
 textured1.roughness = 1;
 textured1.normalMult = 1;
-textured1.metalness = 1;
+textured1.metalness = 0;
 textured1.tilingX = 2;
 textured1.tilingY = 2;
 
