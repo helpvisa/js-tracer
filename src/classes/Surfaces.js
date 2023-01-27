@@ -237,8 +237,9 @@ class Sphere extends Surface {
   }
 }
 
-// axis-aligned rectangle surface
-class Rectangle extends Surface {
+// axis-aligned rectangle surfaces
+// aligned along x and y
+class RectangleXY extends Surface {
   constructor(x0, x1, y0, y1, z, material) {
     let center = new Vector3(0, 0, z);
     center.x = x0 - x1;
@@ -282,6 +283,8 @@ class Rectangle extends Surface {
       normal: frontFace.normal,
       frontFace: frontFace.front,
       material: this.material,
+      u: u,
+      v: v,
       obj: this
     }
     return hitObj;
@@ -291,5 +294,123 @@ class Rectangle extends Surface {
     // bounding box must have non-zero width in all dimensions
     // therefore we must pad the z value by a small amount
     return new AABB(new Vector3(this.x1, this.y1, this.z - 0.001), new Vector3(this.x0, this.y0, this.z + 0.001));
+  }
+}
+
+// aligned along x and z
+class RectangleXZ extends Surface {
+  constructor(x0, x1, z0, z1, y, material) {
+    let center = new Vector3(0, y, 0);
+    center.x = x0 - x1;
+    center.z = z0 - z1;
+
+    // call our super where the origin is our new-found center
+    super(center);
+    // assign our class-specific variables
+    this.x0 = x0;
+    this.x1 = x1;
+    this.z0 = z0;
+    this.z1 = z1;
+    this.y = y;
+    this.material = material;
+
+    // calculate our bounding box
+    this.bounds = this.bounding();
+  }
+
+  hit(ray, t_min, t_max) {
+    const t = (this.y - ray.origin.y) / ray.direction.y;
+    if (t < t_min || t > t_max) {
+      return false;
+    }
+
+    const x = ray.origin.x + t * ray.direction.x;
+    const z = ray.origin.z + t * ray.direction.z;
+    if (x < this.x0 || x > this.x1 || z < this.z0 || z > this.z1) {
+      return false;
+    }
+
+    const u = (x - this.x0) / (this.x1 - this.x0);
+    const v = (z - this.z0) / (this.z1 - this.z0);
+
+    const normal = new Vector3(0, 1, 0); // always faces toward Y since it is axis-aligned
+    const frontFace = setFaceNormal(ray, normal);
+    
+    const hitObj = {
+      t: t,
+      point: ray.getPos(t),
+      normal: frontFace.normal,
+      frontFace: frontFace.front,
+      material: this.material,
+      u: u,
+      v: v,
+      obj: this
+    }
+    return hitObj;
+  }
+
+  bounding() {
+    // bounding box must have non-zero width in all dimensions
+    // therefore we must pad the z value by a small amount
+    return new AABB(new Vector3(this.x1, this.y, this.z1 - 0.001), new Vector3(this.x0, this.y, this.z0 + 0.001));
+  }
+}
+
+// aligned along y and z
+class RectangleYZ extends Surface {
+  constructor(y0, y1, z0, z1, x, material) {
+    let center = new Vector3(x, 0, 0);
+    center.z = z0 - z1;
+    center.y = y0 - y1;
+
+    // call our super where the origin is our new-found center
+    super(center);
+    // assign our class-specific variables
+    this.x = x;
+    this.y0 = y0;
+    this.y1 = y1;
+    this.z0 = z0;
+    this.z1 = z1;
+    this.material = material;
+
+    // calculate our bounding box
+    this.bounds = this.bounding();
+  }
+
+  hit(ray, t_min, t_max) {
+    const t = (this.x - ray.origin.x) / ray.direction.x;
+    if (t < t_min || t > t_max) {
+      return false;
+    }
+
+    const z = ray.origin.z + t * ray.direction.z;
+    const y = ray.origin.y + t * ray.direction.y;
+    if (z < this.z0 || z > this.z1 || y < this.y0 || y > this.y1) {
+      return false;
+    }
+
+    const u = (z - this.z0) / (this.z1 - this.z0);
+    const v = (y - this.y0) / (this.y1 - this.y0);
+
+    const normal = new Vector3(1, 0, 0); // always faces toward X since it is axis-aligned
+    const frontFace = setFaceNormal(ray, normal);
+    
+    const hitObj = {
+      t: t,
+      point: ray.getPos(t),
+      normal: frontFace.normal,
+      frontFace: frontFace.front,
+      material: this.material,
+      u: u,
+      v: v,
+      obj: this
+    }
+    return hitObj;
+  }
+
+  bounding() {
+    // bounding box must have non-zero width in all dimensions
+    // therefore we must pad the z value by a small amount
+    return new AABB(new Vector3(this.x, this.y1, this.z1 - 0.001), new Vector3(this.x, this.y0, this.z0 + 0.001));
   }
 }

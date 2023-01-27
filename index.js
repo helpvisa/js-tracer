@@ -1,8 +1,8 @@
 //== variable declaration ==//
 // define the width and height of our canvas, and determine its aspect ratio
 // 1920x1080 is not a sane value; most likely the canvas should be scaled/stretched to fit the screen after it has finished rendering
-let width = 320;
-let height = 240;
+let width = 400;
+let height = 400;
 let ratio = width / height;
 // tick tracking (for animation, updating on-page values)
 let oldSamples = 0;
@@ -13,7 +13,7 @@ let maxSamples = 100000;
 // set the depth of our samples (# of bounces)
 const globalDepth = 4;
 // define a global variable for whether we want to use BVH or not (defaults to false)
-let useBVH = false;
+let useBVH = true;
 
 // define our sky parameters (zero vectors are pitch black)
 let skyCol = new Vector3(0, 0, 0);
@@ -22,23 +22,23 @@ let skybox;
 
 // define and load our images
 let skyImage = new Image();
-skyImage.src = "./textures/sky/sky_01.png";
+skyImage.src = "./textures/sky/sky_01.jpg";
 let slabDiff = new Image();
-slabDiff.src = "./textures/slab/slab_diff.png";
+slabDiff.src = "./textures/metal_plate/plate_diff.jpg";
 let slabRough = new Image();
-slabRough.src = "./textures/slab/slab_rough.png";
+slabRough.src = "./textures/metal_plate/plate_rough.jpg";
 let slabNorm = new Image();
-slabNorm.src = "./textures/slab/slab_norm.png";
+slabNorm.src = "./textures/metal_plate/plate_norm.jpg";
 let slabMetal = new Image();
-slabMetal.src = "./textures/grate/grate_metal.png";
+slabMetal.src = "./textures/metal_plate/plate_metal.jpg";
 
 // define our camera
-let camera = new Camera(new Vector3(-30, 0, -30), new Vector3(-4, -3, -60), new Vector3(0, 1, 0), 20, ratio);
+let camera = new Camera(new Vector3(-90, 0, -60), new Vector3(0, 0, -64), new Vector3(0, 1, 0), 65, ratio);
 
 // define our materials
 // define our lights
-const light1 = new Material(2, new Vector3(1, 1, 1));
-light1.brightness = 1700;
+const light1 = new Material(2, new Vector3(1, 1, 0.1));
+light1.brightness = 1200;
 const light2 = new Material(2, new Vector3(0.5, 1, 0.5));
 light2.brightness = 5000;
 const light3 = new Material(2, new Vector3(0.5, 0.5, 2));
@@ -59,25 +59,25 @@ const diffuse3 = new Material(0, new Vector3(0.5, 1, 0.5));
 const polished1 = new Material(4, new Vector3(0.25, 1, 0.65));
 polished1.roughness = 0.7;
 
-const textured1 = new Material(4, new Vector3(1, 1, 1));
+const textured1 = new Material(5, new Vector3(1, 1, 1));
 textured1.roughness = 1;
 textured1.normalMult = 1;
 textured1.metalness = 0;
-textured1.tilingX = 2;
-textured1.tilingY = 2;
+textured1.tilingX = 3;
+textured1.tilingY = 3;
 
 // define our world
 const sphere1 = new Sphere(new Vector3(0, 0, -60), 18, textured1);
 const sphere2 = new Sphere(new Vector3(24.5, 11, -49), 8, reflection2);
-const sphere3 = new Sphere(new Vector3(-37, -10, -40), 8, light1);
+const sphere3 = new Sphere(new Vector3(0, -28, -35), 16, light1);
 const sphere4 = new Sphere(new Vector3(-26, 10.75, -55), 8, refractive1);
 const sphere5 = new Sphere(new Vector3(30, -22, -60), 8, light2);
 const sphere6 = new Sphere(new Vector3(0, 318, -60), 300, diffuse3);
 const sphere7 = new Sphere(new Vector3(-30, -10, -15), 6, light3);
-const rect1 = new Rectangle(-80, 80, -1000, -100, -150, light3);
-const rect2 = new Rectangle(-800, 800, -600, 600, -84, reflection1);
+const rect1 = new RectangleXZ(-400, 400, -400, 400, 20, textured1);
+const rect2 = new RectangleXY(-800, 800, -800, 800, -84, textured1);
 
-const world = [sphere1, sphere3, sphere6];
+const world = [rect1, rect2, sphere3];
 
 // create a master BVH container
 const masterBVH = new BVH(world);
@@ -87,15 +87,18 @@ const lights = [sphere3]; // for biased raytracing
 
 
 //== define and manage page elements ==//
-// get our main div and create a canvas element
+// get our main div and create a canvas element, and a loading element
 const div = document.getElementById("canvas");
 const canvas = document.createElement("canvas");
+const loading = document.createElement("h1")
 // define our canvas properties
 canvas.textContent = "The raytracer is being rendered on this canvas.";
 canvas.setAttribute("width", width);
 canvas.setAttribute("height", height);
-// add our canvas to the page
-div.appendChild(canvas);
+// add text to our loading "bar"
+loading.textContent = "Loading assets... please wait.";
+// add our loading bar to the page; we will add the canvas once loading is complete
+div.appendChild(loading);
 // grab our sub-headers and update them
 const samplesPerSecondEl = document.getElementById("samples-per-second");
 const samplesEl = document.getElementById("samples");
@@ -129,6 +132,12 @@ window.onload = () => {
   textured1.roughnessTex = new Texture(slabRough);
   textured1.normalTex = new Texture(slabNorm);
   textured1.metalTex = new Texture(slabMetal);
+
+  // remove our loading "bar" and add our canvas to the page
+  loading.remove();
+  div.appendChild(canvas);
+
+  // begin our progressive rendering loop
   requestAnimationFrame(main);
 };
 

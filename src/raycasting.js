@@ -69,7 +69,7 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyCol, useSkyb
           // find our tangent space
           let t = crossVectors(normal, new Vector3(0, 1, 0));
           if (!magnitudeSquared(t)) {
-            t = crossVectors(normal, new Vetor3(0, 0, 1));
+            t = crossVectors(normal, new Vector3(0, 0, 1));
           }
           t = normalizeVector(t);
           let b = normalizeVector(crossVectors(normal, t));
