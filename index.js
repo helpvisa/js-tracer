@@ -1,8 +1,8 @@
 //== variable declaration ==//
 // define the width and height of our canvas, and determine its aspect ratio
 // 1920x1080 is not a sane value; most likely the canvas should be scaled/stretched to fit the screen after it has finished rendering
-let width = 300;
-let height = 300;
+let width = 960;
+let height = 720;
 let ratio = width / height;
 // tick tracking (for animation, updating on-page values)
 let oldSamples = 0;
@@ -13,7 +13,7 @@ let maxSamples = 100000;
 // set the depth of our samples (# of bounces)
 const globalDepth = 4;
 // define a global variable for whether we want to use BVH or not (defaults to false)
-let useBVH = true;
+let useBVH = false;
 
 // define our sky parameters (zero vectors are pitch black)
 let skyCol = new Vector3(0, 0, 0);
@@ -23,29 +23,43 @@ let skybox;
 // define and load our images
 let skyImage = new Image();
 skyImage.src = "./textures/sky/sky_01.jpg";
+let grateDiff = new Image();
+grateDiff.src = "./textures/metal_plate/plate_diff.jpg";
+let grateRough = new Image();
+grateRough.src = "./textures/metal_plate/plate_rough.jpg";
+let grateNorm = new Image();
+grateNorm.src = "./textures/metal_plate/plate_norm.jpg";
+let grateMetal = new Image();
+grateMetal.src = "./textures/metal_plate/plate_metal.jpg";
+
 let slabDiff = new Image();
-slabDiff.src = "./textures/metal_plate/plate_diff.jpg";
+slabDiff.src = './textures/slab/slab_diff.jpg';
 let slabRough = new Image();
-slabRough.src = "./textures/metal_plate/plate_rough.jpg";
+slabRough.src = './textures/slab/slab_rough.jpg';
 let slabNorm = new Image();
-slabNorm.src = "./textures/metal_plate/plate_norm.jpg";
-let slabMetal = new Image();
-slabMetal.src = "./textures/metal_plate/plate_metal.jpg";
+slabNorm.src = './textures/slab/slab_norm.jpg';
+
+let woodDiff = new Image();
+woodDiff.src = './textures/wood_old/wood_old_diff.jpg';
+let woodRough = new Image();
+woodRough.src = './textures/wood_old/wood_old_rough.jpg';
+let woodNorm = new Image();
+woodNorm.src = './textures/wood_old/wood_old_norm.jpg';
 
 // define our camera
-let camera = new Camera(new Vector3(-90, 0, -60), new Vector3(0, 0, -64), new Vector3(0, 1, 0), 65, ratio);
+let camera = new Camera(new Vector3(0, 0, 0), new Vector3(0, 0, -1), new Vector3(0, 1, 0), 60, ratio);
 
 // define our materials
 // define our lights
-const light1 = new Material(2, new Vector3(1, 1, 0.1));
-light1.brightness = 1200;
-const light2 = new Material(2, new Vector3(0.5, 1, 0.5));
-light2.brightness = 5000;
+const light1 = new Material(2, new Vector3(1, 1, 1));
+light1.brightness = 1000;
+const light2 = new Material(2, new Vector3(1, 1, 0));
+light2.brightness = 500;
 const light3 = new Material(2, new Vector3(0.5, 0.5, 2));
 light3.brightness = 5000;
 
 const reflection1 = new Material(1, new Vector3(1, 1, 1));
-reflection1.roughness = 0.25;
+reflection1.roughness = 0.05;
 const reflection2 = new Material(1, new Vector3(1, 0.035, 0.8));
 reflection2.roughness = 0;
 
@@ -53,37 +67,53 @@ const refractive1 = new Material(3, new Vector3(1, 1, 1));
 refractive1.roughness = 0;
 
 const diffuse1 = new Material(0, new Vector3(1, 1, 1));
-const diffuse2 = new Material(0, new Vector3(0.025, 0.025, 1));
-const diffuse3 = new Material(0, new Vector3(0.5, 1, 0.5));
+const diffuse2 = new Material(0, new Vector3(1, 0, 0));
+const diffuse3 = new Material(0, new Vector3(0, 1, 0));
 
 const polished1 = new Material(4, new Vector3(0.25, 1, 0.65));
-polished1.roughness = 0.7;
+polished1.roughness = 0.1;
 
+// textured materials
 const textured1 = new Material(5, new Vector3(1, 1, 1));
 textured1.roughness = 1;
 textured1.normalMult = 1;
-textured1.metalness = 0;
-textured1.tilingX = 3;
-textured1.tilingY = 3;
+textured1.metalness = 1;
+textured1.tilingX = 2;
+textured1.tilingY = 2;
+
+const textured2 = new Material(4, new Vector3(1, 1, 1));
+textured2.roughness = 1;
+textured2.tilingX = 2;
+textured2.tilingY = 2;
+
+const textured3 = new Material(4, new Vector3(1, 1, 1));
+textured3.roughness = 1;
+textured3.tilingX = 2;
+textured3.tilingY = 2;
 
 // define our world
-const sphere1 = new Sphere(new Vector3(0, 0, -60), 18, textured1);
-const sphere2 = new Sphere(new Vector3(24.5, 11, -49), 8, reflection2);
-const sphere3 = new Sphere(new Vector3(0, -28, -35), 16, light1);
-const sphere4 = new Sphere(new Vector3(-26, 10.75, -55), 8, refractive1);
-const sphere5 = new Sphere(new Vector3(30, -22, -60), 8, light2);
-const sphere6 = new Sphere(new Vector3(0, 318, -60), 300, diffuse3);
-const sphere7 = new Sphere(new Vector3(-30, -10, -15), 6, light3);
-const rect1 = new RectangleXZ(-400, 400, -400, 400, 20, textured1);
-const rect2 = new RectangleXY(-800, 800, -800, 800, -84, textured1);
+// define the containing room
+const ceiling = new RectangleXZ(-40, 40, -40, 10, -10, diffuse1);
+const floor =  new RectangleXZ(-40, 40, -40, 10, 10, textured2);
+const back_wall = new RectangleXY(-40, 40, -40, 40, -40, textured1);
+const left_wall = new RectangleYZ(-10, 10, -40, 10, -10, diffuse2);
+const right_wall = new RectangleYZ(-10, 10, -40, 10, 10, diffuse3);
+const enclosing_wall = new RectangleXY(-40, 40, -40, 40, 10, diffuse1);
+// define the lights within this room
+const ceiling_light = new RectangleXZ(-5, 5, -30, -20, -10, light1);
+// define the objects within this room
+const sphere1 = new Sphere(new Vector3(-4.5, 5.5, -25), 4, diffuse1);
+const sphere2 = new Sphere(new Vector3(4.5, 5.5, -20), 4, diffuse1);
+const box1 = new Box(new Vector3(-7, -5, -35), new Vector3(1, 10, -30), 20, polished1);
+const box2 = new Box(new Vector3(0, 2, -26), new Vector3(8, 10, -21), -18, reflection1);
 
-const world = [rect1, rect2, sphere3];
+const world = [ceiling, floor, back_wall, left_wall, right_wall, enclosing_wall, ceiling_light, box1, box2];
 
 // create a master BVH container
 const masterBVH = new BVH(world);
 
 // create our lights array for sphere which emit light
-const lights = [sphere3]; // for biased raytracing
+const lights = [ceiling_light]; // for biased raytracing
 
 
 //== define and manage page elements ==//
@@ -128,10 +158,18 @@ function main() {
 // call our rendering once the whole webpage has loaded
 window.onload = () => {
   skybox = new Texture(skyImage);
-  textured1.diffuseTex = new Texture(slabDiff);
-  textured1.roughnessTex = new Texture(slabRough);
-  textured1.normalTex = new Texture(slabNorm);
-  textured1.metalTex = new Texture(slabMetal);
+  textured1.diffuseTex = new Texture(grateDiff);
+  textured1.roughnessTex = new Texture(grateRough);
+  textured1.normalTex = new Texture(grateNorm);
+  textured1.metalTex = new Texture(grateMetal);
+
+  textured2.diffuseTex = new Texture(slabDiff);
+  textured2.roughnessTex = new Texture(slabRough);
+  textured2.normalTex = new Texture(slabNorm);
+
+  textured3.diffuseTex = new Texture(woodDiff);
+  textured3.roughnessTex = new Texture(woodRough);
+  textured3.normalTex = new Texture(woodNorm);
 
   // remove our loading "bar" and add our canvas to the page
   loading.remove();

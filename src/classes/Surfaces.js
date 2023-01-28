@@ -295,6 +295,15 @@ class RectangleXY extends Surface {
     // therefore we must pad the z value by a small amount
     return new AABB(new Vector3(this.x1, this.y1, this.z - 0.001), new Vector3(this.x0, this.y0, this.z + 0.001));
   }
+
+  // calculate area
+  area() {
+    return new addVectors(this.origin, 
+      multiplyVector(normalizedRandomVector(), 
+        subtractVectors(new Vector3(this.x1, this.y1, this.z - 0.001), new Vector3(this.x0, this.y0, this.z + 0.001))
+      )
+    );
+  }
 }
 
 // aligned along x and z
@@ -352,7 +361,16 @@ class RectangleXZ extends Surface {
   bounding() {
     // bounding box must have non-zero width in all dimensions
     // therefore we must pad the z value by a small amount
-    return new AABB(new Vector3(this.x1, this.y, this.z1 - 0.001), new Vector3(this.x0, this.y, this.z0 + 0.001));
+    return new AABB(new Vector3(this.x1, this.y - 0.001, this.z1), new Vector3(this.x0, this.y + 0.001, this.z0));
+  }
+
+  // calculate area
+  area() {
+    return new addVectors(this.origin, 
+      multiplyVector(normalizedRandomVector(), 
+        subtractVectors(new Vector3(this.x1, this.y - 0.001, this.z1), new Vector3(this.x0, this.y + 0.001, this.z0))
+      )
+    );
   }
 }
 
@@ -411,6 +429,135 @@ class RectangleYZ extends Surface {
   bounding() {
     // bounding box must have non-zero width in all dimensions
     // therefore we must pad the z value by a small amount
-    return new AABB(new Vector3(this.x, this.y1, this.z1 - 0.001), new Vector3(this.x, this.y0, this.z0 + 0.001));
+    return new AABB(new Vector3(this.x - 0.001, this.y1, this.z1), new Vector3(this.x + 0.001, this.y0, this.z0));
+  }
+
+  // calculate area
+  area() {
+    return new addVectors(this.origin, 
+      multiplyVector(normalizedRandomVector(), 
+        subtractVectors(new Vector3(this.x - 0.001, this.y1, this.z1), new Vector3(this.x + 0.001, this.y0, this.z0))
+      )
+    );
+  }
+}
+
+// box surface
+// essentially a container for six different axis-aligned planes
+class Box extends Surface {
+  constructor(p0, p1, y_rotation, material) {
+    const center = divideVector(addVectors(p0, p1), 2);
+    super(center);
+
+    // get radians from y_rotation degrees input
+    this.rotation = y_rotation;
+    const rot_radians = toRadians(y_rotation);
+
+    // get sin and cos of y_rotation
+    this.sin_theta = Math.sin(rot_radians);
+    this.cos_theta = Math.cos(rot_radians);
+
+    this.min = p0;
+    this.max = p1;
+
+    this.sides = [];
+    // add our sides
+    // front and back sides
+    this.sides.push(new RectangleXY(p0.x, p1.x, p0.y, p1.y, p1.z, material));
+    this.sides.push(new RectangleXY(p0.x, p1.x, p0.y, p1.y, p0.z, material));
+    // top and bottom sides
+    this.sides.push(new RectangleXZ(p0.x, p1.x, p0.z, p1.z, p1.y, material));
+    this.sides.push(new RectangleXZ(p0.x, p1.x, p0.z, p1.z, p0.y, material));
+    // left and right sides
+    this.sides.push(new RectangleYZ(p0.y, p1.y, p0.z, p1.z, p1.x, material));
+    this.sides.push(new RectangleYZ(p0.y, p1.y, p0.z, p1.z, p0.x, material));
+
+    // add our bounds
+    this.bounds = this.bounding();
+  }
+
+  hit(ray, t_min, t_max) {
+    // rotate our ray
+    // origin and direction and rotatedRay must be new objects, not references
+    const origin = new Vector3(ray.origin.x, ray.origin.y, ray.origin.z);
+    const direction = new Vector3(ray.direction.x, ray.direction.y, ray.direction.z);
+    const rotatedRay = new Ray(origin, direction);
+    if (this.rotation !== 0) {
+      // subtract origin to rotate around object's center
+      const tempOrigin = subtractVectors(ray.origin, this.origin);
+      // rotate our ray's origin
+      origin.x = this.cos_theta * tempOrigin.x - this.sin_theta * tempOrigin.z;
+      origin.z = this.sin_theta * tempOrigin.x + this.cos_theta * tempOrigin.z;
+
+      // rotate our ray's direction
+      direction.x = this.cos_theta * ray.direction.x - this.sin_theta * ray.direction.z;
+      direction.z = this.sin_theta * ray.direction.x + this.cos_theta * ray.direction.z;
+
+      // update our rotated ray
+      rotatedRay.origin = addVectors(origin, this.origin);
+      rotatedRay.origin.y -= this.origin.y;
+      rotatedRay.direction = direction;
+    }
+
+    let finalObj;
+    for (let i = 0; i < this.sides.length; i++) {
+      const hit = this.sides[i].hit(rotatedRay, t_min, t_max);
+      if (hit) {
+        // apply rotation if necessary
+        if (this.rotation !== 0) {
+          // rotate hit point
+          const tempPoint = subtractVectors(hit.point, this.origin);
+          hit.point.x = this.cos_theta * tempPoint.x + this.sin_theta * tempPoint.z;
+          hit.point.z = -this.sin_theta * tempPoint.x + this.cos_theta * tempPoint.z;
+          hit.point = addVectors(hit.point, this.origin);
+          hit.point.y -= this.origin.y;
+          // rotate hit normal
+          hit.normal.x = this.cos_theta * hit.normal.x + this.sin_theta * hit.normal.z;
+          hit.normal.z = -this.sin_theta * hit.normal.x + this.cos_theta * hit.normal.z;
+        }
+        t_max = hit.t;
+        finalObj = hit;
+      }
+    }
+    return finalObj;
+  }
+
+  bounding() {
+    // create a min and max with infinity values for comparison
+    const min = new Vector3(Infinity, Infinity, Infinity);
+    const max = new Vector3(-Infinity, -Infinity, -Infinity);
+
+    // apply our y_rotation to the bounding box
+    // this is not rotating around object's origin but rather the world's origin; this will have to be fixed to use BVH
+    for (let i = 0; i < 2; i++) {
+      for (let j = 0; j < 2; j++) {
+        for (let k = 0; k < 2; k++) {
+          const x = i * this.max.x + (1 - i) * this.min.x;
+          const y = j * this.max.y + (1 - j) * this.min.y;
+          const z = k * this.max.z + (1 - k) * this.min.z;
+
+          const newx = this.cos_theta * x + this.sin_theta * z;
+          const newz = -this.sin_theta * x + this.cos_theta * z;
+          
+          const testVector = new Vector3(newx, y, newz);
+
+          // compare and replace min and max
+          min.x = Math.min(min.x, testVector.x);
+          min.y = Math.min(min.y, testVector.y);
+          min.z = Math.min(min.z, testVector.z);
+
+          max.x = Math.max(max.x, testVector.x);
+          max.y = Math.max(max.y, testVector.y);
+          max.z = Math.max(max.z, testVector.z);
+        }
+      }
+    }
+
+    // return our rotated bounding box
+    return new AABB(max, min);
+  }
+
+  area() {
+    return;
   }
 }

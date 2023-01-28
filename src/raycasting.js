@@ -125,7 +125,7 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyCol, useSkyb
           // set a new target based on a reflected vector
           // add randomness if the surface has a rough characteristic
           if (roughness > 0) {
-            normal = addVectors(normal, multiplyVector(unitSphereVector, roughness * roughness));
+            normal = addVectors(normal, multiplyVector(unitSphereVector, roughness));
           }
           // reflect along surface normal
           target = reflectVector(ray.direction, normal);
@@ -143,7 +143,7 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyCol, useSkyb
           // get our refracted vector and create our ray
           // add randomness to normal if the surface has a rough characteristic
           if (roughness > 0) {
-            normal = addVectors(normal, multiplyVector(unitSphereVector, roughness * roughness));
+            normal = addVectors(normal, multiplyVector(unitSphereVector, roughness));
           }
 
           // determine if our material will actually refract
@@ -166,7 +166,7 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyCol, useSkyb
           // apply roughness scale to normal
           // add randomness to normal if the surface has a rough characteristic
           if (roughness > 0) {
-            normal = addVectors(normal, multiplyVector(unitSphereVector, roughness * roughness));
+            normal = addVectors(normal, multiplyVector(unitSphereVector, roughness));
           }
 
           // determine if our material's polish will reflect at this point
@@ -211,7 +211,7 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyCol, useSkyb
           // apply roughness scale to normal
           // add randomness to normal if the surface has a rough characteristic
           if (roughness > 0) {
-            normal = addVectors(normal, multiplyVector(unitSphereVector, roughness * roughness));
+            normal = addVectors(normal, multiplyVector(unitSphereVector, roughness));
           }
 
           // get our reflection information
