@@ -28,7 +28,7 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyCol, useSkyb
 
       // texture colour var
       let texCol = finalObj.material.colour;
-      let roughness = finalObj.material.roughness;
+      let roughness = finalObj.material.roughness * finalObj.material.roughness;
       let metalness = finalObj.material.metalness;
       let normal = finalObj.normal;
       // calc texture values
@@ -276,6 +276,7 @@ function intersectWorld(ray, world, t_min, t_max, depth, lights, skyCol, useSkyb
   }
 }
 
+// functions to be used within primary raycasting function
 // used to refract a ray
 function refract(cos_theta, dir, normal, ratio) {
   dir = normalizeVector(dir);

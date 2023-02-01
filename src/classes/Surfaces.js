@@ -242,8 +242,8 @@ class Sphere extends Surface {
 class RectangleXY extends Surface {
   constructor(x0, x1, y0, y1, z, material) {
     let center = new Vector3(0, 0, z);
-    center.x = x0 - x1;
-    center.y = y0 - y1;
+    center.x = x0 + (x1 - x0) / 2;
+    center.y = y0 + (y1 - y0) / 2;
 
     // call our super where the origin is our new-found center
     super(center);
@@ -257,6 +257,13 @@ class RectangleXY extends Surface {
 
     // calculate our bounding box
     this.bounds = this.bounding();
+
+    // pre-calculate our rectangular area
+    this.areaX = x1 - x0;
+    this.areaY = y1 - y0;
+
+    // "light" radius
+    this.radius = (this.areaX * this.areaY);
   }
 
   hit(ray, t_min, t_max) {
@@ -293,16 +300,13 @@ class RectangleXY extends Surface {
   bounding() {
     // bounding box must have non-zero width in all dimensions
     // therefore we must pad the z value by a small amount
-    return new AABB(new Vector3(this.x1, this.y1, this.z - 0.001), new Vector3(this.x0, this.y0, this.z + 0.001));
+    return new AABB(new Vector3(this.x1, this.y1, this.z + 0.001), new Vector3(this.x0, this.y0, this.z - 0.001));
   }
 
   // calculate area
   area() {
-    return new addVectors(this.origin, 
-      multiplyVector(normalizedRandomVector(), 
-        subtractVectors(new Vector3(this.x1, this.y1, this.z - 0.001), new Vector3(this.x0, this.y0, this.z + 0.001))
-      )
-    );
+    const randomPoint = mixColours(randomVector(), new Vector3(this.areaX, this.areaY, 0));
+    return addVectors(this.origin, randomPoint);
   }
 }
 
@@ -310,8 +314,8 @@ class RectangleXY extends Surface {
 class RectangleXZ extends Surface {
   constructor(x0, x1, z0, z1, y, material) {
     let center = new Vector3(0, y, 0);
-    center.x = x0 - x1;
-    center.z = z0 - z1;
+    center.x = x0 + (x1 - x0) / 2;
+    center.z = z0 + (z1 - z0) / 2;
 
     // call our super where the origin is our new-found center
     super(center);
@@ -325,6 +329,13 @@ class RectangleXZ extends Surface {
 
     // calculate our bounding box
     this.bounds = this.bounding();
+
+    // pre-calculate our rectangular area
+    this.areaX = x1 - x0;
+    this.areaZ = z1 - z0;
+
+    // "light" radius
+    this.radius = (this.areaX * this.areaZ);
   }
 
   hit(ray, t_min, t_max) {
@@ -361,16 +372,13 @@ class RectangleXZ extends Surface {
   bounding() {
     // bounding box must have non-zero width in all dimensions
     // therefore we must pad the z value by a small amount
-    return new AABB(new Vector3(this.x1, this.y - 0.001, this.z1), new Vector3(this.x0, this.y + 0.001, this.z0));
+    return new AABB(new Vector3(this.x1, this.y + 0.001, this.z1), new Vector3(this.x0, this.y - 0.001, this.z0));
   }
 
   // calculate area
   area() {
-    return new addVectors(this.origin, 
-      multiplyVector(normalizedRandomVector(), 
-        subtractVectors(new Vector3(this.x1, this.y - 0.001, this.z1), new Vector3(this.x0, this.y + 0.001, this.z0))
-      )
-    );
+    const randomPoint = mixColours(randomVector(), new Vector3(this.areaX, 0, this.areaZ));
+    return addVectors(this.origin, randomPoint);
   }
 }
 
@@ -378,8 +386,8 @@ class RectangleXZ extends Surface {
 class RectangleYZ extends Surface {
   constructor(y0, y1, z0, z1, x, material) {
     let center = new Vector3(x, 0, 0);
-    center.z = z0 - z1;
-    center.y = y0 - y1;
+    center.z = z0 + (z1 - z0) / 2;
+    center.y = y0 + (y1 - y0) / 2;
 
     // call our super where the origin is our new-found center
     super(center);
@@ -393,6 +401,13 @@ class RectangleYZ extends Surface {
 
     // calculate our bounding box
     this.bounds = this.bounding();
+
+    // pre-calculate our rectangular area
+    this.areaZ = z1 - z0;
+    this.areaY = y1 - y0;
+    
+    // "light" radius
+    this.radius = (this.areaY * this.areaZ);
   }
 
   hit(ray, t_min, t_max) {
@@ -429,16 +444,13 @@ class RectangleYZ extends Surface {
   bounding() {
     // bounding box must have non-zero width in all dimensions
     // therefore we must pad the z value by a small amount
-    return new AABB(new Vector3(this.x - 0.001, this.y1, this.z1), new Vector3(this.x + 0.001, this.y0, this.z0));
+    return new AABB(new Vector3(this.x + 0.001, this.y1, this.z1), new Vector3(this.x - 0.001, this.y0, this.z0));
   }
 
   // calculate area
   area() {
-    return new addVectors(this.origin, 
-      multiplyVector(normalizedRandomVector(), 
-        subtractVectors(new Vector3(this.x - 0.001, this.y1, this.z1), new Vector3(this.x + 0.001, this.y0, this.z0))
-      )
-    );
+    const randomPoint = mixColours(randomVector(), new Vector3(0, this.areaY, this.areaZ));
+    return addVectors(this.origin, randomPoint);
   }
 }
 

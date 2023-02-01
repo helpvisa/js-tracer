@@ -1,8 +1,8 @@
 //== variable declaration ==//
 // define the width and height of our canvas, and determine its aspect ratio
 // 1920x1080 is not a sane value; most likely the canvas should be scaled/stretched to fit the screen after it has finished rendering
-let width = 960;
-let height = 720;
+let width = 320;
+let height = 240;
 let ratio = width / height;
 // tick tracking (for animation, updating on-page values)
 let oldSamples = 0;
@@ -17,7 +17,7 @@ let useBVH = false;
 
 // define our sky parameters (zero vectors are pitch black)
 let skyCol = new Vector3(0, 0, 0);
-let useSkybox = true;
+let useSkybox = false;
 let skybox;
 
 // define and load our images
@@ -52,7 +52,7 @@ let camera = new Camera(new Vector3(0, 0, 0), new Vector3(0, 0, -1), new Vector3
 // define our materials
 // define our lights
 const light1 = new Material(2, new Vector3(1, 1, 1));
-light1.brightness = 1000;
+light1.brightness = 2000;
 const light2 = new Material(2, new Vector3(1, 1, 0));
 light2.brightness = 500;
 const light3 = new Material(2, new Vector3(0.5, 0.5, 2));
@@ -67,8 +67,12 @@ const refractive1 = new Material(3, new Vector3(1, 1, 1));
 refractive1.roughness = 0;
 
 const diffuse1 = new Material(0, new Vector3(1, 1, 1));
-const diffuse2 = new Material(0, new Vector3(1, 0, 0));
-const diffuse3 = new Material(0, new Vector3(0, 1, 0));
+const diffuse2 = new Material(1, new Vector3(1, 0, 0));
+diffuse2.roughness = 0;
+const diffuse3 = new Material(1, new Vector3(0, 1, 0));
+diffuse3.roughness = 0;
+const diffuse4 = new Material(4, new Vector3(0.25, 0.5, 1));
+diffuse4.roughness = 0.25;
 
 const polished1 = new Material(4, new Vector3(0.25, 1, 0.65));
 polished1.roughness = 0.1;
@@ -94,18 +98,18 @@ textured3.tilingY = 2;
 // define our world
 // define the containing room
 const ceiling = new RectangleXZ(-40, 40, -40, 10, -10, diffuse1);
-const floor =  new RectangleXZ(-40, 40, -40, 10, 10, textured2);
-const back_wall = new RectangleXY(-40, 40, -40, 40, -40, textured1);
+const floor =  new RectangleXZ(-40, 40, -40, 10, 10, diffuse1);
+const back_wall = new RectangleXY(-40, 40, -40, 40, -40, diffuse1);
 const left_wall = new RectangleYZ(-10, 10, -40, 10, -10, diffuse2);
 const right_wall = new RectangleYZ(-10, 10, -40, 10, 10, diffuse3);
 const enclosing_wall = new RectangleXY(-40, 40, -40, 40, 10, diffuse1);
 // define the lights within this room
-const ceiling_light = new RectangleXZ(-5, 5, -30, -20, -10, light1);
+const ceiling_light = new RectangleXZ(-2, 2, -27, -22, -10, light1);
 // define the objects within this room
 const sphere1 = new Sphere(new Vector3(-4.5, 5.5, -25), 4, diffuse1);
 const sphere2 = new Sphere(new Vector3(4.5, 5.5, -20), 4, diffuse1);
-const box1 = new Box(new Vector3(-7, -5, -35), new Vector3(1, 10, -30), 20, polished1);
-const box2 = new Box(new Vector3(0, 2, -26), new Vector3(8, 10, -21), -18, reflection1);
+const box1 = new Box(new Vector3(-7, -5, -35), new Vector3(1, 10, -30), 20, diffuse4);
+const box2 = new Box(new Vector3(0, 2, -26), new Vector3(8, 10, -21), -18, diffuse4);
 
 const world = [ceiling, floor, back_wall, left_wall, right_wall, enclosing_wall, ceiling_light, box1, box2];
 
