@@ -1,17 +1,17 @@
 //== variable declaration ==//
 // define the width and height of our canvas, and determine its aspect ratio
 // 1920x1080 is not a sane value; most likely the canvas should be scaled/stretched to fit the screen after it has finished rendering
-let width = 320;
-let height = 240;
+let width = 160;
+let height = 120;
 let ratio = width / height;
 // tick tracking (for animation, updating on-page values)
 let oldSamples = 0;
 let tick = 0;
 // current sample (for accumulation multisampling) and set a max sample rate
 let sample = 0;
-let maxSamples = 100000;
+let maxSamples = 10000;
 // set the depth of our samples (# of bounces)
-const globalDepth = 4;
+const globalDepth = 6;
 // define a global variable for whether we want to use BVH or not (defaults to false)
 let useBVH = false;
 
@@ -40,11 +40,11 @@ let slabNorm = new Image();
 slabNorm.src = './textures/slab/slab_norm.jpg';
 
 let woodDiff = new Image();
-woodDiff.src = './textures/wood_old/wood_old_diff.jpg';
+woodDiff.src = './textures/plank/plank_diff.jpg';
 let woodRough = new Image();
-woodRough.src = './textures/wood_old/wood_old_rough.jpg';
+woodRough.src = './textures/plank/plank_rough.jpg';
 let woodNorm = new Image();
-woodNorm.src = './textures/wood_old/wood_old_norm.jpg';
+woodNorm.src = './textures/plank/plank_norm.jpg';
 
 // define our camera
 let camera = new Camera(new Vector3(0, 0, 0), new Vector3(0, 0, -1), new Vector3(0, 1, 0), 60, ratio);
@@ -52,43 +52,43 @@ let camera = new Camera(new Vector3(0, 0, 0), new Vector3(0, 0, -1), new Vector3
 // define our materials
 // define our lights
 const light1 = new Material(2, new Vector3(1, 1, 1));
-light1.brightness = 2000;
-const light2 = new Material(2, new Vector3(1, 1, 0));
-light2.brightness = 500;
-const light3 = new Material(2, new Vector3(0.5, 0.5, 2));
-light3.brightness = 5000;
+light1.brightness = 1000;
+const light2 = new Material(2, new Vector3(1, 0.1, 0.1));
+light2.brightness = 2500;
+const light3 = new Material(2, new Vector3(0.15, 0.15, 1));
+light3.brightness = 1500;
 
 const reflection1 = new Material(1, new Vector3(1, 1, 1));
 reflection1.roughness = 0.05;
-const reflection2 = new Material(1, new Vector3(1, 0.035, 0.8));
+const reflection2 = new Material(1, new Vector3(1, 0.843, 0));
 reflection2.roughness = 0;
 
 const refractive1 = new Material(3, new Vector3(1, 1, 1));
 refractive1.roughness = 0;
 
 const diffuse1 = new Material(0, new Vector3(1, 1, 1));
-const diffuse2 = new Material(1, new Vector3(1, 0, 0));
+const diffuse2 = new Material(0, new Vector3(1, 0, 0));
 diffuse2.roughness = 0;
-const diffuse3 = new Material(1, new Vector3(0, 1, 0));
+const diffuse3 = new Material(0, new Vector3(0, 1, 0));
 diffuse3.roughness = 0;
 const diffuse4 = new Material(4, new Vector3(0.25, 0.5, 1));
-diffuse4.roughness = 0.25;
+diffuse4.roughness = 0.5;
 
-const polished1 = new Material(4, new Vector3(0.25, 1, 0.65));
-polished1.roughness = 0.1;
+const polished1 = new Material(4, new Vector3(0.65, 0.25, 0.65));
+polished1.roughness = 0;
 
 // textured materials
 const textured1 = new Material(5, new Vector3(1, 1, 1));
 textured1.roughness = 1;
 textured1.normalMult = 1;
 textured1.metalness = 1;
-textured1.tilingX = 2;
-textured1.tilingY = 2;
+textured1.tilingX = 1;
+textured1.tilingY = 1;
 
 const textured2 = new Material(4, new Vector3(1, 1, 1));
 textured2.roughness = 1;
-textured2.tilingX = 2;
-textured2.tilingY = 2;
+textured2.tilingX = 1;
+textured2.tilingY = 1;
 
 const textured3 = new Material(4, new Vector3(1, 1, 1));
 textured3.roughness = 1;
@@ -98,26 +98,28 @@ textured3.tilingY = 2;
 // define our world
 // define the containing room
 const ceiling = new RectangleXZ(-40, 40, -40, 10, -10, diffuse1);
-const floor =  new RectangleXZ(-40, 40, -40, 10, 10, diffuse1);
+const floor =  new RectangleXZ(-40, 40, -40, 10, 10, textured3);
 const back_wall = new RectangleXY(-40, 40, -40, 40, -40, diffuse1);
-const left_wall = new RectangleYZ(-10, 10, -40, 10, -10, diffuse2);
-const right_wall = new RectangleYZ(-10, 10, -40, 10, 10, diffuse3);
+const left_wall = new RectangleYZ(-40, 10, -40, 10, -10, diffuse3);
+const right_wall = new RectangleYZ(-40, 10, -40, 10, 10, textured2);
 const enclosing_wall = new RectangleXY(-40, 40, -40, 40, 10, diffuse1);
 // define the lights within this room
-const ceiling_light = new RectangleXZ(-2, 2, -27, -22, -10, light1);
+const ceiling_light = new RectangleXZ(-2, 2, -34, -18, -10, light1);
+const wall_light = new RectangleYZ(6, 8, -30, -20, -10, light3)
+const sphere1 = new Sphere(new Vector3(4, 0, -24), 2, light2);
 // define the objects within this room
-const sphere1 = new Sphere(new Vector3(-4.5, 5.5, -25), 4, diffuse1);
-const sphere2 = new Sphere(new Vector3(4.5, 5.5, -20), 4, diffuse1);
+const sphere2 = new Sphere(new Vector3(4, 7, -24), 3, reflection2);
 const box1 = new Box(new Vector3(-7, -5, -35), new Vector3(1, 10, -30), 20, diffuse4);
-const box2 = new Box(new Vector3(0, 2, -26), new Vector3(8, 10, -21), -18, diffuse4);
+const box2 = new Box(new Vector3(0, 2, -26), new Vector3(8, 4, -21), -20, polished1);
+const box3 = new Box(new Vector3(-8, -6, -26), new Vector3(-4, 0, -20), 0, refractive1);
 
-const world = [ceiling, floor, back_wall, left_wall, right_wall, enclosing_wall, ceiling_light, box1, box2];
+const world = [ceiling, floor, back_wall, left_wall, right_wall, enclosing_wall, ceiling_light, wall_light, box1, box2, box3, sphere1, sphere2];
 
 // create a master BVH container
 const masterBVH = new BVH(world);
 
 // create our lights array for sphere which emit light
-const lights = [ceiling_light]; // for biased raytracing
+const lights = [ceiling_light, wall_light, sphere1]; // for biased raytracing
 
 
 //== define and manage page elements ==//
@@ -137,6 +139,54 @@ div.appendChild(loading);
 const samplesPerSecondEl = document.getElementById("samples-per-second");
 const samplesEl = document.getElementById("samples");
 const depthEl = document.getElementById("depth");
+// create resolution buttons
+const buttonsEl = document.createElement("div");
+buttonsEl.className = "button-container";
+const ultraLowResEl = document.createElement("button");
+ultraLowResEl.textContent = "160x120";
+ultraLowResEl.addEventListener("click", () => {
+  width = 160;
+  height = 120;
+  resetCanvas();
+});
+const lowResEl = document.createElement("button");
+lowResEl.textContent = "320x240";
+lowResEl.addEventListener("click", () => {
+  width = 320;
+  height = 240;
+  resetCanvas();
+});
+const medResEl = document.createElement("button");
+medResEl.textContent = "640x480";
+medResEl.addEventListener("click", () => {
+  width = 640;
+  height = 480;
+  resetCanvas();
+});
+const medHighResEl = document.createElement("button");
+medHighResEl.textContent = "960x720";
+medHighResEl.addEventListener("click", () => {
+  width = 960;
+  height = 720;
+  resetCanvas();
+});
+const highResEl = document.createElement("button");
+highResEl.textContent = "1280x960";
+highResEl.addEventListener("click", () => {
+  width = 1280;
+  height = 960;
+  resetCanvas();
+});
+const ultraHighResEl = document.createElement("button");
+ultraHighResEl.textContent = "1920x1440";
+ultraHighResEl.addEventListener("click", () => {
+  width = 1920;
+  height = 1440;
+  resetCanvas();
+});
+// add buttons to div, then div to page
+buttonsEl.append(ultraLowResEl, lowResEl, medResEl, medHighResEl, highResEl, ultraHighResEl);
+document.body.appendChild(buttonsEl);
 
 
 //== prepare for rendering ==//
@@ -144,7 +194,7 @@ const depthEl = document.getElementById("depth");
 const context = canvas.getContext("2d");
 
 // create the ImageData object to which we will render our pixels offscreen
-const renderBuffer = context.createImageData(width, height);
+let renderBuffer = context.createImageData(width, height);
 // const displayBuffer = context.createImageData(width, height);
 // wrap a function to call for our primary render loop
 function main() {
@@ -292,4 +342,21 @@ function samplesPerSecondCalc() {
 function moveObject(obj) {
   tick += 0.01;
   obj.origin.y += Math.sin(tick);
+}
+
+// reset the canvas based on a resoltuion change
+function resetCanvas() {
+  // clear data buffer and reset sample count
+  renderBuffer = context.createImageData(width, height);
+  oldSamples = 0;
+  sample = 0;
+  tick = 0;
+  // change size of canvas and recalculate ratio
+  ratio = width / height;
+  camera.ratio = ratio;
+  camera.regenUV();
+  canvas.setAttribute("width", width);
+  canvas.setAttribute("height", height);
+  // set our css variable
+  document.documentElement.style.setProperty('--ratio', ratio);
 }

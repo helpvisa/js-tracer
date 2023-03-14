@@ -5,6 +5,7 @@ class Camera {
   constructor(origin = new Vector3(0, 0, 0), target = new Vector3(0, 0, 1), up = new Vector3(0, 1, 0), fov = 60, ratio = 1) {
     this.origin = origin;
     this.target = target;
+    this.up = up;
     this.fov = fov;
     this.ratio = ratio;
 
@@ -45,5 +46,28 @@ class Camera {
     // rayDir = normalizeVector(rayDir);
 
     return new Ray(this.origin, rayDir);
+  }
+
+  regenUV() {
+    // generate viewplane UVs
+    let theta = toRadians(this.fov);
+    let h = Math.tan(theta / 2);
+    this.viewportHeight = 2 * h;
+    this.viewportWidth = this.viewportHeight * this.ratio;
+
+    let w = normalizeVector(subtractVectors(this.origin, this.target));
+    let u = normalizeVector(crossVectors(this.up, w));
+    let v = crossVectors(w, u);
+
+    // the vector defining the horizontal axis of the viewplane
+    this.horizontal = multiplyVector(u, this.viewportWidth);
+    // the vector defining the vertical axis of the viewplane
+    this.vertical = multiplyVector(v, this.viewportHeight);
+    // find the upper left corner of our viewplane, split process into steps
+    const halfHorizontal = divideVector(this.horizontal, 2);
+    const halfVertical = divideVector(this.vertical, 2);
+    const center = addVectors(halfHorizontal, halfVertical);
+    const subDir = addVectors(center, w);
+    this.upperLeftCorner = subtractVectors(this.origin, subDir);
   }
 }

@@ -12,38 +12,46 @@
 </head>
 
 <body>
-  <h1 class="title">js-tracer</h1>
+  <h1 class="title">
+    js-tracer ::
+  </h1>
   <main id="canvas"></main>
-  <h3 id="samples-per-second">Samples per second: 0</h2>
+  <div class="info">
+    <h3 id="samples-per-second">Samples per second: 0</h2>
     <h3 id="samples">Samples so far: </h3>
-    <h4 id="depth">Current ray depth: </h4>
+    <h3 id="depth">Current ray depth: </h3>
+  </div>
 
-    <!-- import our dependency scripts -->
-    <!-- online imports (seedrandom library) -->
-    <script src="//cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
-    <script src="//cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/lib/alea.min.js"></script>
-    <!-- helpers -->
-    <!-- load our rng object globally -->
-    <script src="./src/helpers/randomseed.js"></script>
-    <script src="./src/classes/Perlin.js"></script>
-    <script src="./src/helpers/math.js"></script>
-    <script src="./src/helpers/vectors.js"></script>
-    <!-- classes -->
-    <script src="./src/classes/AABB.js"></script>
-      <!-- this helper must be loaded after AABB box classes are loaded so it can create them -->
-      <script src="./src/helpers/bounding.js"></script>
-    <!---->
-    <script src="./src/classes/Vector3.js"></script>
-    <script src="./src/classes/Texture.js"></script>
-    <script src="./src/classes/Ray.js"></script>
-    <script src="./src/classes/Camera.js"></script>
-    <script src="./src/classes/Material.js"></script>
-    <script src="./src/classes/Surfaces.js"></script>
-    <!-- raytracing functions (depends on helpers and classes above) -->
-    <script src="./src/raycasting.js"></script>
+  <footer class="bio">
+    dan brackenbury 2023 // <a href="https://www.github.com/helpvisa/js-tracer" target="_blank">github</a>
+  </footer>
 
-    <!-- import our own index.js -->
-    <script src="./index.js"></script>
+  <!-- import our dependency scripts -->
+  <!-- online imports (seedrandom library) -->
+  <script src="//cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/seedrandom.min.js"></script>
+  <script src="//cdnjs.cloudflare.com/ajax/libs/seedrandom/3.0.5/lib/alea.min.js"></script>
+  <!-- helpers -->
+  <!-- load our rng object globally -->
+  <script src="./src/helpers/randomseed.js"></script>
+  <script src="./src/classes/Perlin.js"></script>
+  <script src="./src/helpers/math.js"></script>
+  <script src="./src/helpers/vectors.js"></script>
+  <!-- classes -->
+  <script src="./src/classes/AABB.js"></script>
+    <!-- this helper must be loaded after AABB box classes are loaded so it can create them -->
+    <script src="./src/helpers/bounding.js"></script>
+  <!---->
+  <script src="./src/classes/Vector3.js"></script>
+  <script src="./src/classes/Texture.js"></script>
+  <script src="./src/classes/Ray.js"></script>
+  <script src="./src/classes/Camera.js"></script>
+  <script src="./src/classes/Material.js"></script>
+  <script src="./src/classes/Surfaces.js"></script>
+  <!-- raytracing functions (depends on helpers and classes above) -->
+  <script src="./src/raycasting.js"></script>
+
+  <!-- import our own index.js -->
+  <script src="./index.js"></script>
 </body>
 
 </html>
