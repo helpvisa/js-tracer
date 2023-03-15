@@ -1,17 +1,20 @@
 //== variable declaration ==//
 // define the width and height of our canvas, and determine its aspect ratio
 // 1920x1080 is not a sane value; most likely the canvas should be scaled/stretched to fit the screen after it has finished rendering
-let width = 160;
-let height = 120;
+let width = 320;
+let height = 240;
 let ratio = width / height;
 // tick tracking (for animation, updating on-page values)
 let oldSamples = 0;
 let tick = 0;
+let clock = new Date();
+let oldTimestamp = clock.getTime();
+let delta = 0;
 // current sample (for accumulation multisampling) and set a max sample rate
 let sample = 0;
 let maxSamples = 10000;
 // set the depth of our samples (# of bounces)
-const globalDepth = 6;
+let globalDepth = 6;
 // define a global variable for whether we want to use BVH or not (defaults to false)
 let useBVH = false;
 
@@ -22,7 +25,8 @@ let skybox;
 
 // define and load our images
 let skyImage = new Image();
-skyImage.src = "./textures/sky/sky_01.jpg";
+skyImage.src = "./textures/sky/vestibule.jpg";
+
 let grateDiff = new Image();
 grateDiff.src = "./textures/metal_plate/plate_diff.jpg";
 let grateRough = new Image();
@@ -46,20 +50,33 @@ woodRough.src = './textures/plank/plank_rough.jpg';
 let woodNorm = new Image();
 woodNorm.src = './textures/plank/plank_norm.jpg';
 
+let coralDiff = new Image();
+coralDiff.src = "./textures/coral/coral_diff.jpg";
+let coralRough = new Image();
+coralRough.src = "./textures/coral/coral_rough.jpg";
+let coralNorm = new Image();
+coralNorm.src = "./textures/coral/coral_norm.jpg";
+
 // define our camera
 let camera = new Camera(new Vector3(0, 0, 0), new Vector3(0, 0, -1), new Vector3(0, 1, 0), 60, ratio);
 
 // define our materials
 // define our lights
 const light1 = new Material(2, new Vector3(1, 1, 1));
-light1.brightness = 1000;
+light1.brightness = 1500;
 const light2 = new Material(2, new Vector3(1, 0.1, 0.1));
 light2.brightness = 2500;
 const light3 = new Material(2, new Vector3(0.15, 0.15, 1));
-light3.brightness = 1500;
+light3.brightness = 3000;
+const light4 = new Material(2, new Vector3(1, 0.1, 0.1));
+light4.brightness = 500;
+const light5 = new Material(2, new Vector3(0.1, 0.1, 1));
+light5.brightness = 500;
+const light6 = new Material(2, new Vector3(1, 1, 1));
+light6.brightness = 2000;
 
 const reflection1 = new Material(1, new Vector3(1, 1, 1));
-reflection1.roughness = 0.05;
+reflection1.roughness = 0.25;
 const reflection2 = new Material(1, new Vector3(1, 0.843, 0));
 reflection2.roughness = 0;
 
@@ -72,40 +89,49 @@ diffuse2.roughness = 0;
 const diffuse3 = new Material(0, new Vector3(0, 1, 0));
 diffuse3.roughness = 0;
 const diffuse4 = new Material(4, new Vector3(0.25, 0.5, 1));
-diffuse4.roughness = 0.5;
+diffuse4.roughness = 0.2;
 
 const polished1 = new Material(4, new Vector3(0.65, 0.25, 0.65));
 polished1.roughness = 0;
+const polished2 = new Material(4, new Vector3(0.1, 0.1, 1));
+polished2.roughness = 0.4;
+const polished3 = new Material(4, new Vector3(1, 0.1, 0.1));
+polished3.roughness = 0.4;
+const polished4 = new Material(4, new Vector3(1, 1, 1));
+polished3.roughness = 0.4;
 
 // textured materials
 const textured1 = new Material(5, new Vector3(1, 1, 1));
 textured1.roughness = 1;
 textured1.normalMult = 1;
 textured1.metalness = 1;
-textured1.tilingX = 1;
-textured1.tilingY = 1;
+textured1.tilingX = 2;
+textured1.tilingY = 2;
 
 const textured2 = new Material(4, new Vector3(1, 1, 1));
 textured2.roughness = 1;
-textured2.tilingX = 1;
-textured2.tilingY = 1;
+textured2.tilingX = 2.25;
+textured2.tilingY = 2.25;
 
 const textured3 = new Material(4, new Vector3(1, 1, 1));
+textured3.normalMult = 1;
 textured3.roughness = 1;
 textured3.tilingX = 2;
 textured3.tilingY = 2;
 
-// define our world
+// define our scenes
+// scene 1 -------------------------------------------------------//
+const scene1_camera = new Camera(new Vector3(0, 0, 0), new Vector3(0, 0, -1), new Vector3(0, 1, 0), 60, ratio);
 // define the containing room
-const ceiling = new RectangleXZ(-40, 40, -40, 10, -10, diffuse1);
+const ceiling = new RectangleXZ(-40, 40, -40, 10, -10, textured2);
 const floor =  new RectangleXZ(-40, 40, -40, 10, 10, textured3);
-const back_wall = new RectangleXY(-40, 40, -40, 40, -40, diffuse1);
+const back_wall = new RectangleXY(-40, 40, -40, 10, -40, diffuse1);
 const left_wall = new RectangleYZ(-40, 10, -40, 10, -10, diffuse3);
-const right_wall = new RectangleYZ(-40, 10, -40, 10, 10, textured2);
+const right_wall = new RectangleYZ(-40, 10, -40, 10, 10, textured1);
 const enclosing_wall = new RectangleXY(-40, 40, -40, 40, 10, diffuse1);
 // define the lights within this room
-const ceiling_light = new RectangleXZ(-2, 2, -34, -18, -10, light1);
-const wall_light = new RectangleYZ(6, 8, -30, -20, -10, light3)
+const ceiling_light = new RectangleXZ(-1, 1, -28, -19, -10, light1);
+const wall_light = new RectangleYZ(1, 5, -30, -20, -10, light3)
 const sphere1 = new Sphere(new Vector3(4, 0, -24), 2, light2);
 // define the objects within this room
 const sphere2 = new Sphere(new Vector3(4, 7, -24), 3, reflection2);
@@ -113,13 +139,52 @@ const box1 = new Box(new Vector3(-7, -5, -35), new Vector3(1, 10, -30), 20, diff
 const box2 = new Box(new Vector3(0, 2, -26), new Vector3(8, 4, -21), -20, polished1);
 const box3 = new Box(new Vector3(-8, -6, -26), new Vector3(-4, 0, -20), 0, refractive1);
 
-const world = [ceiling, floor, back_wall, left_wall, right_wall, enclosing_wall, ceiling_light, wall_light, box1, box2, box3, sphere1, sphere2];
+const scene1 = [ceiling, ceiling_light, floor, back_wall, left_wall, right_wall, enclosing_wall, wall_light, box1, box2, box3, sphere1, sphere2];
+const lighting1 = [ceiling_light, wall_light, sphere1];
+
+const setup_01 = { scene: scene1, lighting: lighting1, camera: scene1_camera };
+// ---------------------------------------------------------------//
+// scene 2 -------------------------------------------------------//
+const scene2_camera = new Camera(new Vector3(-8, -5, 40), new Vector3(-0.5, 0, -20), new Vector3(0, 1, 0), 20, ratio);
+// objects
+const s2_ground = new RectangleXZ(-40, 40, -40, 200, 10, polished4);
+const s2_backwall = new RectangleXY(-200, 20, -40, 10, -40, reflection1);
+const s2_frontwall = new RectangleXY(-200)
+const s2_midwall = new Box(new Vector3(-1, 0, -40), new Vector3(1, 10, 200), 0, polished4);
+const s2_sphere1 = new Sphere(new Vector3(-9, 5, -24), 5, polished3);
+const s2_sphere2 = new Sphere(new Vector3(9, 5, -24), 5, polished2);
+const s2_rightwall_light = new RectangleYZ(-200, 10, -40, 200, 20, light4);
+const s2_leftwall_light = new RectangleYZ(-200, 10, -40, 200, -20, light5);
+
+const scene2 = [s2_ground, s2_backwall, s2_sphere1, s2_sphere2, s2_rightwall_light, s2_leftwall_light, s2_midwall];
+const lighting2 = [];
+
+const setup_02 = { scene: scene2, lighting: lighting2, camera: scene2_camera };
+// ---------------------------------------------------------------//
+// scene 2 -------------------------------------------------------//
+const scene3_camera = new Camera(new Vector3(-4, 0, -30), new Vector3(1, 0, -40), new Vector3(0, 1, 0), 14, ratio);
+// objects
+const s3_sphere = new Sphere(new Vector3(0, 0, -40), 4, textured2);
+const s3_light = new Sphere(new Vector3(0, 0, -30), 2.2, light6);
+
+const scene3 = [s3_sphere, s3_light];
+const lighting3 = [s3_light];
+
+const setup_03 = { scene: scene3, lighting: lighting3, camera: scene3_camera };
+// ---------------------------------------------------------------//
+const setups = [setup_01, setup_02, setup_03];
+
+// assign a scene camera to our master camera
+camera = scene2_camera;
+
+// assign a scene to the world
+let world = scene2;
 
 // create a master BVH container
-const masterBVH = new BVH(world);
+let masterBVH = new BVH(world);
 
 // create our lights array for sphere which emit light
-const lights = [ceiling_light, wall_light, sphere1]; // for biased raytracing
+let lights = lighting2; // for biased raytracing
 
 
 //== define and manage page elements ==//
@@ -131,61 +196,88 @@ const loading = document.createElement("h1")
 canvas.textContent = "The raytracer is being rendered on this canvas.";
 canvas.setAttribute("width", width);
 canvas.setAttribute("height", height);
+
 // add text to our loading "bar"
 loading.textContent = "Loading assets... please wait.";
 // add our loading bar to the page; we will add the canvas once loading is complete
 div.appendChild(loading);
+
 // grab our sub-headers and update them
 const samplesPerSecondEl = document.getElementById("samples-per-second");
 const samplesEl = document.getElementById("samples");
 const depthEl = document.getElementById("depth");
+
 // create resolution buttons
 const buttonsEl = document.createElement("div");
 buttonsEl.className = "button-container";
-const ultraLowResEl = document.createElement("button");
-ultraLowResEl.textContent = "160x120";
-ultraLowResEl.addEventListener("click", () => {
-  width = 160;
-  height = 120;
+
+const xElContainer = document.createElement("div");
+xElContainer.className = "input-container";
+const xEl = document.createElement("input");
+xEl.id = "xEl";
+xEl.setAttribute("type", "number");
+xEl.value = "320";
+const xLabel = document.createElement("label");
+xLabel.setAttribute("for", xEl.id);
+xLabel.innerHTML = "width";
+xElContainer.append(xLabel, xEl);
+
+const yElContainer = document.createElement("div");
+yElContainer.className = "input-container";
+const yEl = document.createElement("input");
+yEl.id = "yEl";
+yEl.setAttribute("type", "number");
+yEl.value = "240";
+const yLabel = document.createElement("label");
+yLabel.setAttribute("for", yEl.id);
+yLabel.innerHTML = "height";
+yElContainer.append(yLabel, yEl);
+
+const depthInputContainer = document.createElement("div");
+depthInputContainer.className = "input-container";
+const depthInput = document.createElement("input");
+depthInput.id = "depthInput";
+depthInput.setAttribute("type", "number");
+depthInput.value = "6";
+const depthInputLabel = document.createElement("label");
+depthInputLabel.setAttribute("for", depthInput.id);
+depthInputLabel.innerHTML = "depth";
+depthInputContainer.append(depthInputLabel, depthInput);
+
+const submitEl = document.createElement("button");
+submitEl.textContent = "update";
+submitEl.addEventListener("click", () => {
+  // update internal values
+  width = parseInt(xEl.value);
+  height = parseInt(yEl.value);
+  globalDepth = parseInt(depthInput.value);
+
+  // update our canvas
   resetCanvas();
 });
-const lowResEl = document.createElement("button");
-lowResEl.textContent = "320x240";
-lowResEl.addEventListener("click", () => {
-  width = 320;
-  height = 240;
-  resetCanvas();
-});
-const medResEl = document.createElement("button");
-medResEl.textContent = "640x480";
-medResEl.addEventListener("click", () => {
-  width = 640;
-  height = 480;
-  resetCanvas();
-});
-const medHighResEl = document.createElement("button");
-medHighResEl.textContent = "960x720";
-medHighResEl.addEventListener("click", () => {
-  width = 960;
-  height = 720;
-  resetCanvas();
-});
-const highResEl = document.createElement("button");
-highResEl.textContent = "1280x960";
-highResEl.addEventListener("click", () => {
-  width = 1280;
-  height = 960;
-  resetCanvas();
-});
-const ultraHighResEl = document.createElement("button");
-ultraHighResEl.textContent = "1920x1440";
-ultraHighResEl.addEventListener("click", () => {
-  width = 1920;
-  height = 1440;
-  resetCanvas();
-});
-// add buttons to div, then div to page
-buttonsEl.append(ultraLowResEl, lowResEl, medResEl, medHighResEl, highResEl, ultraHighResEl);
+
+// scene swappers
+const buttonDivider = document.createElement("p");
+// add buttons and divider to div
+buttonsEl.append(xElContainer, yElContainer, depthInputContainer, submitEl, buttonDivider);
+// assemble scene buttons and add after divider
+for (let i = 0; i < setups.length; i++) {
+  const sceneButton = document.createElement("button");
+  sceneButton.textContent = "scene" + (i + 1);
+
+  sceneButton.addEventListener("click", () => {
+    const swap = setups[i];
+
+    camera = swap.camera;
+    lights = swap.lighting;
+    world = swap.scene;
+
+    resetCanvas();
+  });
+
+  buttonsEl.appendChild(sceneButton);
+}
+// add buttons element to page
 document.body.appendChild(buttonsEl);
 
 
@@ -197,13 +289,18 @@ const context = canvas.getContext("2d");
 let renderBuffer = context.createImageData(width, height);
 // const displayBuffer = context.createImageData(width, height);
 // wrap a function to call for our primary render loop
-function main() {
+async function main() {
+  // calc
+  samplesPerSecondCalc();
   // update our on-page elements
   samplesEl.textContent = "Samples so far: " + sample;
   depthEl.textContent = "Current ray depth: " + globalDepth;
   if (sample < maxSamples) {
     raytrace();
   }
+
+  // update the on-browser image
+  context.putImageData(renderBuffer, 0, 0);
 
   // recursively call self
   requestAnimationFrame(main);
@@ -232,9 +329,6 @@ window.onload = () => {
   // begin our progressive rendering loop
   requestAnimationFrame(main);
 };
-
-// check how many samples are being rendered per second
-setInterval(samplesPerSecondCalc, 1000);
 
 
 //== function declaration ==//
@@ -280,9 +374,6 @@ function raytrace() {
       renderData[index + 3] = 255; // full alpha
     }
   }
-
-  // update the on-browser image
-  context.putImageData(renderBuffer, 0, 0);
 }
 
 // fills the buffer with one specific colour
@@ -333,9 +424,18 @@ function getIndex(x, y, width) {
 
 // calculates the # of samples being performed per second (roughly)
 function samplesPerSecondCalc() {
-  let numSinceCheck = (sample - oldSamples); // will be updated 4 times per second
-  samplesPerSecondEl.textContent = "Samples per second: " + numSinceCheck;
-  oldSamples = sample;
+  clock = new Date();
+  const currentTimestamp = clock.getTime();
+
+  delta += (currentTimestamp - oldTimestamp) / 1000 // current delta in seconds
+  oldTimestamp = currentTimestamp;
+
+  if (delta > 1) {
+    const numSinceCheck = (sample - oldSamples);
+    samplesPerSecondEl.textContent = "Samples per second: " + numSinceCheck;
+    oldSamples = sample;
+    delta = 0;
+  }
 }
 
 // moves the world

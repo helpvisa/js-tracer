@@ -3,6 +3,10 @@
   --ratio: 1.3333;
 }
 
+* {
+  font-family: monospace;
+}
+
 body {
   background-color: rgb(51, 41, 41);
   color: rgb(255, 187, 187);
@@ -23,11 +27,11 @@ body {
 
 .title {
   position: absolute;
-  top: 8vh;
+  top: 14%;
   left: 50%;
   transform: translate(-50%, 0);
 
-  font-size: 6vh;
+  font-size: 3vh;
 
   text-align: center;
   width: 100%;
@@ -66,21 +70,72 @@ body {
 
 .button-container {
   position: absolute;
-  top: 0%;
+  top: 1%;
   left: 50%;
   transform: translate(-50%, 0);
 
+  padding: 12px;
+  border-style:double;
+  border-radius: 20px;
+
   display: flex;
   flex-direction: row;
+  justify-content: space-between;
+}
+
+.button-container .input-container {
+  margin: auto 1vw;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.button-container input {
+  padding: 2px;
+
+  width: 8vw;
+
+  font-size: 1.5vw;
+  text-align: center;
+
+  border-radius: 20px;
+
+  background-color: rgb(255, 187, 187);
+  color: rgb(51, 41, 41);
+}
+
+.button-container label {
+  margin: 0px;
+  padding: 0px;
+
+  font-size: 1.5vw;
+
+  color: rgb(255, 187, 187);
 }
 
 .button-container button {
-  margin: 2px;
-  padding: 2px;
+  margin: auto 2px;
+  padding: 10px;
 
-  font-size: 2vw;
+  width: auto;
+
+  font-size: 1vw;
+  text-align: center;
+
+  border-radius: 20px;
 
   background-color: rgb(255, 187, 187);
+  color: rgb(51, 41, 41);
+}
+
+.button-container p {
+  width: 0.5vw;
+  margin: auto 8px;
+
+  border-style: double;
+  border-radius: 20px;
+
+  color: rgb(255, 187, 187);
 }
 
 /* reactive elements when flipping phone / in widescreen */
