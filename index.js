@@ -188,17 +188,21 @@ let lights = lighting2; // for biased raytracing
 
 
 //== define and manage page elements ==//
+// our title (added to master control container)
+const titleEl = document.createElement("h2");
+titleEl.textContent = "js-tracer ::";
 // get our main div and create a canvas element, and a loading element
 const div = document.getElementById("canvas");
 const canvas = document.createElement("canvas");
 const loading = document.createElement("h1")
+loading.className = "loading";
 // define our canvas properties
 canvas.textContent = "The raytracer is being rendered on this canvas.";
 canvas.setAttribute("width", width);
 canvas.setAttribute("height", height);
 
 // add text to our loading "bar"
-loading.textContent = "Loading assets... please wait.";
+loading.textContent = "Loading...";
 // add our loading bar to the page; we will add the canvas once loading is complete
 div.appendChild(loading);
 
@@ -208,6 +212,9 @@ const samplesEl = document.getElementById("samples");
 const depthEl = document.getElementById("depth");
 
 // create resolution buttons
+const masterControlEl = document.createElement("div");
+masterControlEl.className = "master-container";
+masterControlEl.appendChild(titleEl);
 const buttonsEl = document.createElement("div");
 buttonsEl.className = "button-container";
 
@@ -256,11 +263,11 @@ submitEl.addEventListener("click", () => {
   resetCanvas();
 });
 
-// scene swappers
-const buttonDivider = document.createElement("p");
 // add buttons and divider to div
-buttonsEl.append(xElContainer, yElContainer, depthInputContainer, submitEl, buttonDivider);
+buttonsEl.append(xElContainer, yElContainer, depthInputContainer, submitEl);
 // assemble scene buttons and add after divider
+const sceneButtonContainer = document.createElement("div");
+sceneButtonContainer.className = "button-container";
 for (let i = 0; i < setups.length; i++) {
   const sceneButton = document.createElement("button");
   sceneButton.textContent = "scene" + (i + 1);
@@ -275,10 +282,11 @@ for (let i = 0; i < setups.length; i++) {
     resetCanvas();
   });
 
-  buttonsEl.appendChild(sceneButton);
+  sceneButtonContainer.appendChild(sceneButton);
 }
 // add buttons element to page
-document.body.appendChild(buttonsEl);
+masterControlEl.append(buttonsEl, sceneButtonContainer);
+document.body.appendChild(masterControlEl);
 
 
 //== prepare for rendering ==//
@@ -293,8 +301,8 @@ async function main() {
   // calc
   samplesPerSecondCalc();
   // update our on-page elements
-  samplesEl.textContent = "Samples so far: " + sample;
-  depthEl.textContent = "Current ray depth: " + globalDepth;
+  samplesEl.textContent = "samples: " + sample + " ::";
+  depthEl.textContent = "ray depth: " + globalDepth + " ::";
   if (sample < maxSamples) {
     raytrace();
   }
@@ -432,7 +440,7 @@ function samplesPerSecondCalc() {
 
   if (delta > 1) {
     const numSinceCheck = (sample - oldSamples);
-    samplesPerSecondEl.textContent = "Samples per second: " + numSinceCheck;
+    samplesPerSecondEl.textContent = "samples / second: " + numSinceCheck + " ::";
     oldSamples = sample;
     delta = 0;
   }
@@ -457,6 +465,4 @@ function resetCanvas() {
   camera.regenUV();
   canvas.setAttribute("width", width);
   canvas.setAttribute("height", height);
-  // set our css variable
-  document.documentElement.style.setProperty('--ratio', ratio);
 }
