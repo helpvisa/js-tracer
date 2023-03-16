@@ -180,4 +180,8 @@ input[type=number] {
   .button-container button {
     font-size: 3vw;
   }
+
+  .button-container input {
+    width: 14vw;
+  }
 }
