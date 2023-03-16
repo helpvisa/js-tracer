@@ -96,11 +96,10 @@ input[type=number] {
 }
 
 .button-container {
-  margin: 6px 10px 0px 10px;
+  margin: 6px 10px 10px 10px;
   display: flex;
   flex-direction: row;
   align-items: space-around;
-  height: 6.3vh;
 }
 
 .button-container .input-container {
@@ -139,7 +138,7 @@ input[type=number] {
 
   width: auto;
 
-  font-size: 2vw;
+  font-size: 2.5vh;
   text-align: center;
 
   border-radius: 20px;
