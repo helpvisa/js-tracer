@@ -1,2 +1,5 @@
 # mac files
 .DS_Store
+
+# wsl metadata
+*:Zone.Identifier
